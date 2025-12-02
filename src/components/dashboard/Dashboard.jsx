@@ -25,37 +25,42 @@ const Dashboard = () => {
 
   useEffect(() => {
     const load = async () => {
-      const analyticsData = await fetchJson("/api/analytics/");
-      const machinesData = await fetchJson("/api/machines/");
+      try {
+        const analyticsData = await fetchJson("/api/analytics/");
+        const machinesData = await fetchJson("/api/machines/");
 
-      setAnalytics(analyticsData);
-      setMachines(machinesData);
+        setAnalytics(analyticsData);
+        setMachines(machinesData);
 
-      const accuracy = analyticsData?.accuracy_by_class || [];
-      const total = accuracy.reduce((s, c) => s + (c.total || 0), 0);
-      const accepted = accuracy.reduce((s, c) => s + (c.accepted || 0), 0);
-      const rejected = accuracy.reduce((s, c) => s + (c.rejected || 0), 0);
+        // Overview calculations
+        const accuracy = analyticsData?.accuracy_by_class || [];
+        const total = accuracy.reduce((s, c) => s + (c.total || 0), 0);
+        const accepted = accuracy.reduce((s, c) => s + (c.accepted || 0), 0);
+        const rejected = accuracy.reduce((s, c) => s + (c.rejected || 0), 0);
 
-      const avgArr = analyticsData?.avg_confidence_by_item || [];
-      const avg =
-        avgArr.length > 0
-          ? avgArr.reduce((s, c) => s + (c.avg_conf || c.avg_confidence || 0), 0) /
-            avgArr.length
-          : 0;
+        const avgArr = analyticsData?.avg_confidence_by_item || [];
+        const avg =
+          avgArr.length > 0
+            ? avgArr.reduce((s, c) => s + (c.avg_conf || c.avg_confidence || 0), 0) /
+              avgArr.length
+            : 0;
 
-      const flagCount =
-        accuracy.reduce((s, c) => s + (c.flag_count || 0), 0) ||
-        analyticsData?.flagged_count ||
-        0;
+        const flagCount =
+          accuracy.reduce((s, c) => s + (c.flag_count || 0), 0) ||
+          analyticsData?.flagged_count ||
+          0;
 
-      setOverview({
-        total,
-        accepted,
-        rejected,
-        avg_confidence: Math.round(avg * 1000) / 10,
-        flagged: flagCount,
-        active_machines: `${machinesData.filter((m) => m.online).length}/${machinesData.length}`,
-      });
+        setOverview({
+          total,
+          accepted,
+          rejected,
+          avg_confidence: Math.round(avg * 1000) / 10,
+          flagged: flagCount,
+          active_machines: `${machinesData.filter((m) => m.online).length}/${machinesData.length}`,
+        });
+      } catch (err) {
+        console.error("Failed to load dashboard data:", err);
+      }
     };
 
     load();
@@ -64,8 +69,7 @@ const Dashboard = () => {
   const accuracyByClass = analytics?.accuracy_by_class || [];
   const avgConfByItem = analytics?.avg_confidence_by_item || [];
   const flagFrequency = analytics?.flag_frequency || [];
-  const modelCompare =
-    analytics?.model_compare || analytics?.predictions_by_model || [];
+  const modelCompare = analytics?.model_compare || analytics?.predictions_by_model || [];
   const brandsSummary = analytics?.brands_summary || [];
 
   const topModel = [...(analytics?.predictions_by_model || [])].sort(
@@ -84,7 +88,6 @@ const Dashboard = () => {
         />
 
         <main className="flex-1 p-6">
-
           {activeTab === "overview" && (
             <OverviewTab overview={overview} topModel={topModel} />
           )}
@@ -121,14 +124,12 @@ const Dashboard = () => {
             />
           )}
 
-          {/* Brand Predictions */}
           {activeTab === "brand_predictions" && (
             <BrandsPrediction
               selectedBrand={selectedBrand}
               setSelectedBrand={setSelectedBrand}
             />
           )}
-
         </main>
       </div>
     </div>
