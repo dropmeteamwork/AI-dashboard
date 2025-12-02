@@ -1,3 +1,4 @@
+// ChartsAnalytics.jsx
 import React, { useEffect, useState } from "react";
 import {
   ResponsiveContainer,
@@ -28,7 +29,7 @@ const themeColors = {
 const API_BASE = import.meta.env.VITE_API_URL;
 
 /**
- * FIXED API HOOK (absolute backend path)
+ * Universal API hook
  */
 const useApi = (path) => {
   const url = `${API_BASE}${path}`;
@@ -42,9 +43,9 @@ const useApi = (path) => {
     setLoading(true);
 
     fetch(url, { signal: ac.signal })
-      .then((r) => {
-        if (!r.ok) throw new Error(`${r.status}`);
-        return r.json();
+      .then((res) => {
+        if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+        return res.json();
       })
       .then((json) => setData(json))
       .catch((err) => {
@@ -62,10 +63,7 @@ const useApi = (path) => {
  * PredictionsConfidenceDistributionChart
  */
 export const PredictionsConfidenceDistributionChart = ({ limit = 1000 }) => {
-  const { data, loading, error } = useApi(
-    `/api/predictions/?page_size=${limit}`
-  );
-
+  const { data, loading, error } = useApi(`/ai_dashboard/predictions/?page_size=${limit}`);
   const results = data?.results || [];
 
   const buckets = {
@@ -85,14 +83,11 @@ export const PredictionsConfidenceDistributionChart = ({ limit = 1000 }) => {
     else buckets["<60%"]++;
   });
 
-  const chartData = Object.entries(buckets).map(([range, count]) => ({
-    range,
-    count,
-  }));
+  const chartData = Object.entries(buckets).map(([range, count]) => ({ range, count }));
 
   if (loading) return <div className="p-4">Loading prediction confidences…</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error.message}</div>;
-  if (!chartData.length) return <div className="p-4">No data</div>;
+  if (!chartData.length) return <div className="p-4 text-gray-500">No data</div>;
 
   return (
     <ResponsiveContainer width="100%" height={300}>
@@ -111,10 +106,7 @@ export const PredictionsConfidenceDistributionChart = ({ limit = 1000 }) => {
  * AcceptedRejectedChart
  */
 export const AcceptedRejectedChart = ({ limit = 1000 }) => {
-  const { data, loading, error } = useApi(
-    `/api/predictions/?page_size=${limit}`
-  );
-
+  const { data, loading, error } = useApi(`/ai_dashboard/predictions/?page_size=${limit}`);
   const results = data?.results || [];
 
   let accepted = 0;
@@ -133,6 +125,7 @@ export const AcceptedRejectedChart = ({ limit = 1000 }) => {
 
   if (loading) return <div className="p-4">Loading accept/reject…</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error.message}</div>;
+  if (!chartData.length) return <div className="p-4 text-gray-500">No data</div>;
 
   return (
     <ResponsiveContainer width="100%" height={260}>
@@ -158,14 +151,11 @@ export const AcceptedRejectedChart = ({ limit = 1000 }) => {
  * RecentPredictionsTimeline
  */
 export const RecentPredictionsTimeline = ({ limit = 200 }) => {
-  const { data, loading, error } = useApi(
-    `/api/recent-activity/?page_size=${limit}`
-  );
-
+  const { data, loading, error } = useApi(`/ai_dashboard/recent-activity/?page_size=${limit}`);
   const results = data?.results || data || [];
 
   const map = new Map();
-  (results || []).forEach((r) => {
+  results.forEach((r) => {
     const t = r.created_at || r.timestamp || r.last_seen;
     if (!t) return;
     const key = t.slice(0, 16); // round per minute
@@ -178,7 +168,7 @@ export const RecentPredictionsTimeline = ({ limit = 200 }) => {
 
   if (loading) return <div className="p-4">Loading timeline…</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error.message}</div>;
-  if (!chartData.length) return <div className="p-4">No data</div>;
+  if (!chartData.length) return <div className="p-4 text-gray-500">No data</div>;
 
   return (
     <ResponsiveContainer width="100%" height={250}>
@@ -187,12 +177,7 @@ export const RecentPredictionsTimeline = ({ limit = 200 }) => {
         <XAxis dataKey="time" stroke="#4b5563" />
         <YAxis stroke="#4b5563" />
         <Tooltip />
-        <Line
-          type="monotone"
-          dataKey="count"
-          stroke={themeColors.primaryDark}
-          strokeWidth={2}
-        />
+        <Line type="monotone" dataKey="count" stroke={themeColors.primaryDark} strokeWidth={2} />
       </LineChart>
     </ResponsiveContainer>
   );

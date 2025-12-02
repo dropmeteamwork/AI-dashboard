@@ -20,17 +20,9 @@ import {
 /* Color Palette                                                              */
 /* -------------------------------------------------------------------------- */
 const COLORS = [
-  "#14532D",
-  "#166534",
-  "#17863F",
-  "#1FA64A",
-  "#28C556",
-  "#4ADE80",
-  "#86EFAC",
-  "#BBF7D0",
-  "#DCFCE7",
+  "#14532D", "#166534", "#17863F", "#1FA64A", "#28C556",
+  "#4ADE80", "#86EFAC", "#BBF7D0", "#DCFCE7",
 ];
-
 const GREEN = "#28C556";
 const DARK_GREEN = "#14532D";
 const GREEN_GRID = "#28C55622";
@@ -40,16 +32,14 @@ const AXIS = "#2d2d2d";
 /* Reusable Tooltip                                                           */
 /* -------------------------------------------------------------------------- */
 const CustomTooltip = ({ active, payload, label }) => {
-  if (!active || !payload || !payload.length) return null;
+  if (!active || !payload?.length) return null;
   return (
     <div className="p-2 rounded shadow bg-white border border-gray-100 text-sm">
-      <div className="font-semibold text-sm mb-1">{label}</div>
+      <div className="font-semibold mb-1">{label}</div>
       {payload.map((p, i) => (
         <div key={i} className="flex items-center gap-2">
           <div style={{ width: 10, height: 10, background: p.color }} />
-          <div>
-            {p.name}: <span className="font-medium">{p.value}</span>
-          </div>
+          <div>{p.name}: <span className="font-medium">{p.value}</span></div>
         </div>
       ))}
     </div>
@@ -57,11 +47,11 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Accuracy By Class (Stacked)                                                */
+/* Accuracy By Class Chart (Stacked)                                          */
 /* -------------------------------------------------------------------------- */
 export const AccuracyByClassChart = ({ data = [] }) => {
-  const chartData = data.map((d) => ({
-    item: d.item,
+  const chartData = data.map(d => ({
+    item: d.item || "Unknown",
     accepted: d.accepted || 0,
     rejected: d.rejected || 0,
   }));
@@ -87,8 +77,8 @@ export const AccuracyByClassChart = ({ data = [] }) => {
 /* Avg Confidence By Item                                                     */
 /* -------------------------------------------------------------------------- */
 export const AvgConfidenceByItemChart = ({ data = [] }) => {
-  const chartData = data.map((d) => ({
-    item: d.item,
+  const chartData = data.map(d => ({
+    item: d.item || "Unknown",
     avg_conf: (d.avg_conf ?? d.avg_confidence ?? 0) * 100,
   }));
 
@@ -125,14 +115,13 @@ export const AvgConfidenceHistogram = ({ data = [] }) => {
     { name: "80-100%", count: 0 },
   ];
 
-  data.forEach((d) => {
+  data.forEach(d => {
     const conf = (d.avg_conf ?? d.avg_confidence ?? 0) * 100;
-    let idx = 0;
-    if (conf >= 80) idx = 4;
-    else if (conf >= 60) idx = 3;
-    else if (conf >= 40) idx = 2;
-    else if (conf >= 20) idx = 1;
-    buckets[idx].count += 1;
+    if (conf >= 80) buckets[4].count++;
+    else if (conf >= 60) buckets[3].count++;
+    else if (conf >= 40) buckets[2].count++;
+    else if (conf >= 20) buckets[1].count++;
+    else buckets[0].count++;
   });
 
   return (
@@ -153,13 +142,10 @@ export const AvgConfidenceHistogram = ({ data = [] }) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Flag Frequency                                                             */
+/* Flag Frequency Chart                                                       */
 /* -------------------------------------------------------------------------- */
 export const FlagFrequencyChart = ({ data = [] }) => {
-  const chartData = data.map((d) => ({
-    flag: d.flag,
-    count: d.count,
-  }));
+  const chartData = data.map(d => ({ flag: d.flag, count: d.count }));
 
   if (!chartData.length) return <div className="p-4">No data</div>;
 
@@ -184,9 +170,9 @@ export const FlagFrequencyChart = ({ data = [] }) => {
 /* Model Compare Chart                                                        */
 /* -------------------------------------------------------------------------- */
 export const ModelCompareChart = ({ data = [] }) => {
-  const chartData = data.map((d) => ({
-    model: d.model_used,
-    count: d.count,
+  const chartData = data.map(d => ({
+    model: d.model_used || "Unknown",
+    count: d.count || 0,
   }));
 
   if (!chartData.length) return <div className="p-4">No data</div>;
@@ -209,12 +195,12 @@ export const ModelCompareChart = ({ data = [] }) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Decision Duration (Line Chart)                                             */
+/* Decision Duration Chart (Line)                                             */
 /* -------------------------------------------------------------------------- */
 export const DecisionDurationChart = ({ data = [] }) => {
-  const chartData = data.map((d) => ({
-    item: d.item,
-    time: d.avg_time,
+  const chartData = data.map(d => ({
+    item: d.item || "Unknown",
+    time: d.avg_time || 0,
   }));
 
   if (!chartData.length) return <div className="p-4">No data</div>;
@@ -248,18 +234,13 @@ export const BrandsSummaryChart = ({ data = [] }) => {
           className="flex items-center justify-between border rounded-lg p-3 bg-white shadow-sm"
         >
           <div className="flex items-center gap-3">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ background: COLORS[i % COLORS.length] }}
-            />
+            <div className="w-3 h-3 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
             <div>
-              <div className="text-sm font-semibold">{b.brand}</div>
-              <div className="text-xs text-gray-500">
-                Last seen: {b.last_seen || "N/A"}
-              </div>
+              <div className="text-sm font-semibold">{b.brand || "Unknown"}</div>
+              <div className="text-xs text-gray-500">Last seen: {b.last_seen || "N/A"}</div>
             </div>
           </div>
-          <div className="text-lg font-bold">{b.total}</div>
+          <div className="text-lg font-bold">{b.total || 0}</div>
         </div>
       ))}
     </div>
@@ -273,12 +254,11 @@ export const BrandsPieChart = ({ data = [], top = 8 }) => {
   if (!data.length) return <div className="p-4">No data</div>;
 
   const sorted = data.slice().sort((a, b) => b.total - a.total).slice(0, top);
+  const total = sorted.reduce((sum, b) => sum + (b.total || 0), 0) || 1;
 
-  const total = sorted.reduce((a, b) => a + b.total, 0) || 1;
-
-  const chartData = sorted.map((b) => ({
-    name: b.brand,
-    value: b.total,
+  const chartData = sorted.map(b => ({
+    name: b.brand || "Unknown",
+    value: b.total || 0,
     percent: ((b.total / total) * 100).toFixed(1),
   }));
 

@@ -1,5 +1,5 @@
-import React from "react";
-import { useEffect, useState } from "react";
+// src/components/charts/ModelsCharts.jsx
+import React, { useEffect, useState } from "react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -15,7 +15,10 @@ import {
 // BACKEND DOMAIN
 const BASE_URL = "https://web-ai-dashboard.up.railway.app";
 
-const useApi = (endpoint) => {
+// -------------------------
+// API Hook
+// -------------------------
+export const useApi = (endpoint) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,7 +27,6 @@ const useApi = (endpoint) => {
     const ac = new AbortController();
     setLoading(true);
 
-    // FULL URL for Vercel
     const url = `${BASE_URL}${endpoint}`;
 
     fetch(url, { signal: ac.signal })
@@ -44,9 +46,12 @@ const useApi = (endpoint) => {
   return { data, loading, error };
 };
 
+// -------------------------
+// Model Performance Chart
+// -------------------------
 export const ModelPerformanceChart = ({ days = 30 }) => {
   const { data, loading, error } = useApi(
-    `/ai_dashboard/dashboard-admin/model-performance/?days=${days}`
+    `/ai_dashboard/model-performance/?days=${days}`
   );
 
   const series = data?.series || [];
@@ -77,10 +82,12 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
   );
 };
 
+// -------------------------
+// Models Confidence Chart
+// -------------------------
 export const ModelsConfidenceChart = () => {
-  const { data, loading, error } = useApi(
-    `/ai_dashboard/dashboard-admin/ai-models/`
-  );
+  // UPDATED ENDPOINT: removed old /dashboard-admin/
+  const { data, loading, error } = useApi(`/ai_dashboard/ai-models/`);
 
   const models = data?.models || [];
   const chartData = models.map((m) => ({
