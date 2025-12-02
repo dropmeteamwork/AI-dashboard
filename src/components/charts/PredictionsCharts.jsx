@@ -14,9 +14,9 @@ import {
   Line,
 } from "recharts";
 
-//  FRIENDS GREEN PALETTE (Your image)
+// FRIENDS GREEN PALETTE
 const themeColors = {
-  primary: "#4CAF50",     // main green
+  primary: "#4CAF50",
   primaryDark: "#388E3C",
   primaryLight: "#81C784",
   accent: "#A5D6A7",
@@ -24,8 +24,15 @@ const themeColors = {
   danger: "#EF5350",
 };
 
-// API hook
-const useApi = (url) => {
+// GLOBAL BACKEND URL
+const API_BASE = import.meta.env.VITE_API_URL;
+
+/**
+ * FIXED API HOOK (absolute backend path)
+ */
+const useApi = (path) => {
+  const url = `${API_BASE}${path}`;
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,16 +40,18 @@ const useApi = (url) => {
   useEffect(() => {
     const ac = new AbortController();
     setLoading(true);
+
     fetch(url, { signal: ac.signal })
       .then((r) => {
         if (!r.ok) throw new Error(`${r.status}`);
         return r.json();
       })
-      .then((j) => setData(j))
-      .catch((e) => {
-        if (e.name !== "AbortError") setError(e);
+      .then((json) => setData(json))
+      .catch((err) => {
+        if (err.name !== "AbortError") setError(err);
       })
       .finally(() => setLoading(false));
+
     return () => ac.abort();
   }, [url]);
 
@@ -53,7 +62,10 @@ const useApi = (url) => {
  * PredictionsConfidenceDistributionChart
  */
 export const PredictionsConfidenceDistributionChart = ({ limit = 1000 }) => {
-  const { data, loading, error } = useApi(`/api/predictions/?page_size=${limit}`);
+  const { data, loading, error } = useApi(
+    `/api/predictions/?page_size=${limit}`
+  );
+
   const results = data?.results || [];
 
   const buckets = {
@@ -99,11 +111,15 @@ export const PredictionsConfidenceDistributionChart = ({ limit = 1000 }) => {
  * AcceptedRejectedChart
  */
 export const AcceptedRejectedChart = ({ limit = 1000 }) => {
-  const { data, loading, error } = useApi(`/api/predictions/?page_size=${limit}`);
+  const { data, loading, error } = useApi(
+    `/api/predictions/?page_size=${limit}`
+  );
+
   const results = data?.results || [];
 
   let accepted = 0;
   let rejected = 0;
+
   results.forEach((r) => {
     const status = (r.status || "").toLowerCase();
     if (status.includes("accept")) accepted++;
@@ -142,14 +158,17 @@ export const AcceptedRejectedChart = ({ limit = 1000 }) => {
  * RecentPredictionsTimeline
  */
 export const RecentPredictionsTimeline = ({ limit = 200 }) => {
-  const { data, loading, error } = useApi(`/api/recent-activity/?page_size=${limit}`);
+  const { data, loading, error } = useApi(
+    `/api/recent-activity/?page_size=${limit}`
+  );
+
   const results = data?.results || data || [];
 
   const map = new Map();
   (results || []).forEach((r) => {
     const t = r.created_at || r.timestamp || r.last_seen;
     if (!t) return;
-    const key = t.slice(0, 16); // minute bucket
+    const key = t.slice(0, 16); // round per minute
     map.set(key, (map.get(key) || 0) + 1);
   });
 

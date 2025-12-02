@@ -9,16 +9,25 @@ import {
   CartesianGrid,
   Cell,
 } from "recharts";
-import { GREEN_PALETTE, THEME } from "../dashboard/theme";
+import { GREEN_PALETTE } from "../dashboard/theme";
 import NoData from "../dashboard/NoData";
 
 export default function ModelCompareChart({ data }) {
-  if (!data || data.length === 0) return <NoData text="No model comparison data" />;
+  // Defensive checks
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return <NoData text="No model comparison data" />;
+  }
 
+  // Normalize data safely
   const formatted = data.map((d, i) => ({
-    name: d.model_used || d.name || "Unknown",
-    count: d.count || d.total || 0,
-    color: GREEN_PALETTE[i % GREEN_PALETTE.length],
+    name: d.model_used || d.name || "Unknown Model",
+    count:
+      d.count !== undefined
+        ? d.count
+        : d.total !== undefined
+        ? d.total
+        : 0,
+    color: GREEN_PALETTE[i % GREEN_PALETTE.length] || "#4ade80", // fallback green
   }));
 
   return (
@@ -29,9 +38,10 @@ export default function ModelCompareChart({ data }) {
           <XAxis dataKey="name" />
           <YAxis />
           <Tooltip />
+
           <Bar dataKey="count">
             {formatted.map((entry, i) => (
-              <Cell key={i} fill={entry.color} />
+              <Cell key={`cell-${i}`} fill={entry.color} />
             ))}
           </Bar>
         </BarChart>

@@ -14,7 +14,19 @@ import {
   Legend,
 } from "recharts";
 
-const useApi = (url) => {
+/**
+ * Global Backend URL
+ * Make sure you have a .env file with:
+ * VITE_API_URL=https://web-ai-dashboard.up.railway.app
+ */
+const API_BASE = import.meta.env.VITE_API_URL;
+
+/**
+ * UNIVERSAL API HOOK (FIXED)
+ */
+const useApi = (path) => {
+  const url = `${API_BASE}${path}`;
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,8 +59,9 @@ const useApi = (url) => {
  * ProcessingTrendChart
  */
 export const ProcessingTrendChart = ({ period = "hourly" }) => {
-  const url = `/api/processing/?period=${period}`;
-  const { data, loading, error } = useApi(url);
+  const { data, loading, error } = useApi(
+    `/api/processing/?period=${period}`
+  );
 
   const chartData = (data?.series || []).map((s) => ({
     label: s.hour ? new Date(s.hour).toLocaleString() : "Unknown",

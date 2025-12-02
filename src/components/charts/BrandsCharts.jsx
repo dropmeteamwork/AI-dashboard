@@ -7,26 +7,38 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip
+  Tooltip,
 } from "recharts";
 
-// API hook
-const useApi = (url) => {
+/**
+ * Global Backend URL
+ */
+const API_BASE = import.meta.env.VITE_API_URL;
+
+/**
+ * Universal API hook
+ */
+const useApi = (path) => {
+  const url = `${API_BASE}${path}`;
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const ac = new AbortController();
+    setLoading(true);
 
     fetch(url, { signal: ac.signal })
       .then((r) => {
-        if (!r.ok) throw new Error(r.status);
+        if (!r.ok) throw new Error(`${r.status} ${r.statusText}`);
         return r.json();
       })
-      .then((j) => setData(j))
-      .catch((e) => {
-        if (e.name !== "AbortError") setError(e);
+      .then((json) => {
+        setData(json);
+        setError(null);
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") setError(err);
       })
       .finally(() => setLoading(false));
 
@@ -36,14 +48,16 @@ const useApi = (url) => {
   return { data, loading, error };
 };
 
-// ✔ Your Custom Brand Chart
+/**
+ * Brands Summary Chart
+ */
 export const BrandsSummaryChart = () => {
   const { data, loading, error } = useApi("/api/analytics/");
   const brands = data?.brands_summary || [];
 
   const chartData = brands.map((b) => ({
     brand: b.brand,
-    total: b.total
+    total: b.total,
   }));
 
   if (loading) return <div className="p-4">Loading brands…</div>;

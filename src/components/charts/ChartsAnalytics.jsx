@@ -16,7 +16,9 @@ import {
   Line,
 } from "recharts";
 
-/* Palette from your screenshot */
+/* -------------------------------------------------------------------------- */
+/* Color Palette                                                              */
+/* -------------------------------------------------------------------------- */
 const COLORS = [
   "#14532D",
   "#166534",
@@ -34,7 +36,9 @@ const DARK_GREEN = "#14532D";
 const GREEN_GRID = "#28C55622";
 const AXIS = "#2d2d2d";
 
-/* Small reusable tooltip (clean white box) */
+/* -------------------------------------------------------------------------- */
+/* Reusable Tooltip                                                           */
+/* -------------------------------------------------------------------------- */
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
   return (
@@ -43,7 +47,9 @@ const CustomTooltip = ({ active, payload, label }) => {
       {payload.map((p, i) => (
         <div key={i} className="flex items-center gap-2">
           <div style={{ width: 10, height: 10, background: p.color }} />
-          <div>{p.name}: <span className="font-medium">{p.value}</span></div>
+          <div>
+            {p.name}: <span className="font-medium">{p.value}</span>
+          </div>
         </div>
       ))}
     </div>
@@ -51,40 +57,37 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Classification Distribution — stacked Accepted (green) / Rejected (red)    */
+/* Accuracy By Class (Stacked)                                                */
 /* -------------------------------------------------------------------------- */
 export const AccuracyByClassChart = ({ data = [] }) => {
-  const chartData = (data || []).map((d) => ({
+  const chartData = data.map((d) => ({
     item: d.item,
     accepted: d.accepted || 0,
     rejected: d.rejected || 0,
-    total: d.total || (d.accepted || 0) + (d.rejected || 0),
   }));
 
   if (!chartData.length) return <div className="p-4">No data</div>;
 
   return (
     <ResponsiveContainer width="100%" height={320}>
-      <BarChart data={chartData} margin={{ top: 10, right: 20, left: 8, bottom: 30 }}>
+      <BarChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" stroke={GREEN_GRID} />
-        <XAxis dataKey="item" stroke={AXIS} tick={{ fontSize: 12 }} />
-        <YAxis stroke={AXIS} tick={{ fontSize: 12 }} />
+        <XAxis dataKey="item" stroke={AXIS} />
+        <YAxis stroke={AXIS} />
         <Tooltip content={<CustomTooltip />} />
-        <Legend verticalAlign="bottom" height={36} />
-        {/* accepted green bottom stack */}
-        <Bar dataKey="accepted" stackId="a" name="Accepted" fill={GREEN} radius={[6, 6, 0, 0]} />
-        {/* rejected red on top */}
-        <Bar dataKey="rejected" stackId="a" name="Rejected" fill="#ef4444" radius={[6, 6, 0, 0]} />
+        <Legend />
+        <Bar dataKey="accepted" stackId="a" fill={GREEN} />
+        <Bar dataKey="rejected" stackId="a" fill="#ef4444" />
       </BarChart>
     </ResponsiveContainer>
   );
 };
 
 /* -------------------------------------------------------------------------- */
-/* Avg Confidence By Item — show avg_conf * 100 as percent bars               */
+/* Avg Confidence By Item                                                     */
 /* -------------------------------------------------------------------------- */
 export const AvgConfidenceByItemChart = ({ data = [] }) => {
-  const chartData = (data || []).map((d) => ({
+  const chartData = data.map((d) => ({
     item: d.item,
     avg_conf: (d.avg_conf ?? d.avg_confidence ?? 0) * 100,
   }));
@@ -93,12 +96,12 @@ export const AvgConfidenceByItemChart = ({ data = [] }) => {
 
   return (
     <ResponsiveContainer width="100%" height={320}>
-      <BarChart data={chartData} margin={{ top: 10, right: 20, left: 8, bottom: 30 }}>
+      <BarChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" stroke={GREEN_GRID} />
-        <XAxis dataKey="item" stroke={AXIS} tick={{ fontSize: 12 }} />
-        <YAxis stroke={AXIS} tick={{ fontSize: 12 }} unit="%" />
+        <XAxis dataKey="item" stroke={AXIS} />
+        <YAxis stroke={AXIS} unit="%" />
         <Tooltip content={<CustomTooltip />} />
-        <Bar dataKey="avg_conf" name="Avg Confidence (%)" animationDuration={900}>
+        <Bar dataKey="avg_conf">
           {chartData.map((_, i) => (
             <Cell key={i} fill={COLORS[i % COLORS.length]} />
           ))}
@@ -109,13 +112,11 @@ export const AvgConfidenceByItemChart = ({ data = [] }) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Avg Confidence Histogram (buckets 0-9 => 0-9%)                              */
+/* Avg Confidence Histogram                                                   */
 /* -------------------------------------------------------------------------- */
 export const AvgConfidenceHistogram = ({ data = [] }) => {
-  // Accepts same avg_confidence_by_item array
-  if (!data?.length) return <div className="p-4">No data</div>;
+  if (!data.length) return <div className="p-4">No data</div>;
 
-  // create 5 buckets: 0-19,20-39,40-59,60-79,80-100
   const buckets = [
     { name: "0-19%", count: 0 },
     { name: "20-39%", count: 0 },
@@ -131,18 +132,17 @@ export const AvgConfidenceHistogram = ({ data = [] }) => {
     else if (conf >= 60) idx = 3;
     else if (conf >= 40) idx = 2;
     else if (conf >= 20) idx = 1;
-    else idx = 0;
     buckets[idx].count += 1;
   });
 
   return (
     <ResponsiveContainer width="100%" height={320}>
-      <BarChart data={buckets} margin={{ top: 10, right: 20, left: 8, bottom: 30 }}>
+      <BarChart data={buckets}>
         <CartesianGrid strokeDasharray="3 3" stroke={GREEN_GRID} />
-        <XAxis dataKey="name" stroke={AXIS} tick={{ fontSize: 12 }} />
-        <YAxis stroke={AXIS} tick={{ fontSize: 12 }} />
+        <XAxis dataKey="name" stroke={AXIS} />
+        <YAxis stroke={AXIS} />
         <Tooltip content={<CustomTooltip />} />
-        <Bar dataKey="count" name="Items" animationDuration={900}>
+        <Bar dataKey="count">
           {buckets.map((_, i) => (
             <Cell key={i} fill={COLORS[i % COLORS.length]} />
           ))}
@@ -153,10 +153,10 @@ export const AvgConfidenceHistogram = ({ data = [] }) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Flag Frequency (bars)                                                      */
+/* Flag Frequency                                                             */
 /* -------------------------------------------------------------------------- */
 export const FlagFrequencyChart = ({ data = [] }) => {
-  const chartData = (data || []).map((d) => ({
+  const chartData = data.map((d) => ({
     flag: d.flag,
     count: d.count,
   }));
@@ -165,12 +165,12 @@ export const FlagFrequencyChart = ({ data = [] }) => {
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={chartData} margin={{ top: 10, right: 12, left: 8, bottom: 30 }}>
+      <BarChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" stroke={GREEN_GRID} />
-        <XAxis dataKey="flag" stroke={AXIS} tick={{ fontSize: 12 }} />
-        <YAxis stroke={AXIS} tick={{ fontSize: 12 }} />
+        <XAxis dataKey="flag" stroke={AXIS} />
+        <YAxis stroke={AXIS} />
         <Tooltip content={<CustomTooltip />} />
-        <Bar dataKey="count" name="Count" animationDuration={900}>
+        <Bar dataKey="count">
           {chartData.map((_, i) => (
             <Cell key={i} fill={COLORS[i % COLORS.length]} />
           ))}
@@ -181,10 +181,10 @@ export const FlagFrequencyChart = ({ data = [] }) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Model Compare (simple bar)                                                 */
+/* Model Compare Chart                                                        */
 /* -------------------------------------------------------------------------- */
 export const ModelCompareChart = ({ data = [] }) => {
-  const chartData = (data || []).map((d) => ({
+  const chartData = data.map((d) => ({
     model: d.model_used,
     count: d.count,
   }));
@@ -193,12 +193,12 @@ export const ModelCompareChart = ({ data = [] }) => {
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={chartData} margin={{ top: 10, right: 12, left: 8, bottom: 30 }}>
+      <BarChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" stroke={GREEN_GRID} />
-        <XAxis dataKey="model" stroke={AXIS} tick={{ fontSize: 12 }} />
-        <YAxis stroke={AXIS} tick={{ fontSize: 12 }} />
+        <XAxis dataKey="model" stroke={AXIS} />
+        <YAxis stroke={AXIS} />
         <Tooltip content={<CustomTooltip />} />
-        <Bar dataKey="count" name="Predictions" animationDuration={900}>
+        <Bar dataKey="count">
           {chartData.map((_, i) => (
             <Cell key={i} fill={COLORS[i % COLORS.length]} />
           ))}
@@ -209,94 +209,73 @@ export const ModelCompareChart = ({ data = [] }) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Decision Duration (line)                                                   */
+/* Decision Duration (Line Chart)                                             */
 /* -------------------------------------------------------------------------- */
 export const DecisionDurationChart = ({ data = [] }) => {
-  const chartData = (data || []).map((d) => ({
+  const chartData = data.map((d) => ({
     item: d.item,
-    time: d.avg_time ?? 0,
+    time: d.avg_time,
   }));
 
   if (!chartData.length) return <div className="p-4">No data</div>;
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={chartData} margin={{ top: 10, right: 12, left: 8, bottom: 30 }}>
+      <LineChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" stroke={GREEN_GRID} />
-        <XAxis dataKey="item" stroke={AXIS} tick={{ fontSize: 12 }} />
-        <YAxis stroke={AXIS} tick={{ fontSize: 12 }} />
+        <XAxis dataKey="item" stroke={AXIS} />
+        <YAxis stroke={AXIS} />
         <Tooltip content={<CustomTooltip />} />
-        <Line type="monotone" dataKey="time" stroke={GREEN} strokeWidth={3} dot={{ r: 4 }} />
+        <Line type="monotone" dataKey="time" stroke={GREEN} strokeWidth={3} dot />
       </LineChart>
     </ResponsiveContainer>
   );
 };
 
-// /* -------------------------------------------------------------------------- */
-// /* Brands Summary (vertical horizontal list + big pie)                        */
-// /* -------------------------------------------------------------------------- */
 /* -------------------------------------------------------------------------- */
-/* Brands Summary — Scrollable List + Counts                                   */
-/* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
-/* Brands Summary — Scrollable List Behind Pie Chart                          */
+/* Brands Summary List                                                        */
 /* -------------------------------------------------------------------------- */
 export const BrandsSummaryChart = ({ data = [] }) => {
-  const chartData = (data || []).slice().sort((a, b) => b.total - a.total);
+  const chartData = data.slice().sort((a, b) => b.total - a.total);
 
   if (!chartData.length) return <div className="p-4">No data</div>;
 
   return (
     <div className="w-full h-[420px] overflow-y-auto pr-2 space-y-3">
-      {chartData.map((brand, i) => (
+      {chartData.map((b, i) => (
         <div
           key={i}
-          className="flex items-center justify-between border rounded-lg p-3 bg-white shadow-sm hover:bg-gray-50 transition"
+          className="flex items-center justify-between border rounded-lg p-3 bg-white shadow-sm"
         >
           <div className="flex items-center gap-3">
-            {/* color dot */}
             <div
               className="w-3 h-3 rounded-full"
               style={{ background: COLORS[i % COLORS.length] }}
             />
-
             <div>
-              <div className="text-sm font-semibold">{brand.brand}</div>
+              <div className="text-sm font-semibold">{b.brand}</div>
               <div className="text-xs text-gray-500">
-                last seen: {brand.last_seen || "N/A"}
+                Last seen: {b.last_seen || "N/A"}
               </div>
             </div>
           </div>
-
-          <div className="text-lg font-bold">{brand.total}</div>
+          <div className="text-lg font-bold">{b.total}</div>
         </div>
       ))}
     </div>
   );
 };
 
-
-
-
-
-
-
-
-
-
 /* -------------------------------------------------------------------------- */
 /* Brands Pie Chart                                                           */
 /* -------------------------------------------------------------------------- */
 export const BrandsPieChart = ({ data = [], top = 8 }) => {
-  if (!data?.length) return <div className="p-4">No data</div>;
+  if (!data.length) return <div className="p-4">No data</div>;
 
-  // Sort & take top N
   const sorted = data.slice().sort((a, b) => b.total - a.total).slice(0, top);
 
-  // Total for percentage calculation
-  const total = sorted.reduce((acc, item) => acc + (item.total || 0), 0) || 1;
+  const total = sorted.reduce((a, b) => a + b.total, 0) || 1;
 
-  // Prepare pie data
   const chartData = sorted.map((b) => ({
     name: b.brand,
     value: b.total,
@@ -310,22 +289,17 @@ export const BrandsPieChart = ({ data = [], top = 8 }) => {
           data={chartData}
           dataKey="value"
           nameKey="name"
-          outerRadius={130}
           innerRadius={60}
-          paddingAngle={2}
-          label={({ name, percent }) => `${name} (${percent}%)`}
+          outerRadius={130}
+          label
         >
           {chartData.map((_, i) => (
             <Cell key={i} fill={COLORS[i % COLORS.length]} />
           ))}
         </Pie>
-
-        <Legend verticalAlign="bottom" height={32} />
         <Tooltip content={<CustomTooltip />} />
+        <Legend />
       </PieChart>
     </ResponsiveContainer>
   );
 };
-
-
-

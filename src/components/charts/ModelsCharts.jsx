@@ -1,14 +1,32 @@
 import React from "react";
 import { useEffect, useState } from "react";
-import { ResponsiveContainer, LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, BarChart, Bar } from "recharts";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  BarChart,
+  Bar,
+} from "recharts";
 
-const useApi = (url) => {
+// BACKEND DOMAIN
+const BASE_URL = "https://web-ai-dashboard.up.railway.app";
+
+const useApi = (endpoint) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   useEffect(() => {
     const ac = new AbortController();
     setLoading(true);
+
+    // FULL URL for Vercel
+    const url = `${BASE_URL}${endpoint}`;
+
     fetch(url, { signal: ac.signal })
       .then((r) => {
         if (!r.ok) throw new Error(`${r.status}`);
@@ -19,15 +37,23 @@ const useApi = (url) => {
         if (e.name !== "AbortError") setError(e);
       })
       .finally(() => setLoading(false));
+
     return () => ac.abort();
-  }, [url]);
+  }, [endpoint]);
+
   return { data, loading, error };
 };
 
 export const ModelPerformanceChart = ({ days = 30 }) => {
-  const { data, loading, error } = useApi(`/api/model-performance/?days=${days}`);
+  const { data, loading, error } = useApi(
+    `/ai_dashboard/dashboard-admin/model-performance/?days=${days}`
+  );
+
   const series = data?.series || [];
-  const chartData = series.map((s) => ({ day: s.day, avg_confidence: +(s.avg_confidence || s.avg_conf || 0) * 100 }));
+  const chartData = series.map((s) => ({
+    day: s.day,
+    avg_confidence: +(s.avg_confidence || s.avg_conf || 0) * 100,
+  }));
 
   if (loading) return <div className="p-4">Loading model performance…</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error.message}</div>;
@@ -40,16 +66,27 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
         <XAxis dataKey="day" stroke="#666" />
         <YAxis stroke="#666" unit="%" />
         <Tooltip />
-        <Line type="monotone" dataKey="avg_confidence" stroke="#2563EB" name="Avg Confidence (%)" />
+        <Line
+          type="monotone"
+          dataKey="avg_confidence"
+          stroke="#2563EB"
+          name="Avg Confidence (%)"
+        />
       </LineChart>
     </ResponsiveContainer>
   );
 };
 
 export const ModelsConfidenceChart = () => {
-  const { data, loading, error } = useApi("/api/ai-models/");
+  const { data, loading, error } = useApi(
+    `/ai_dashboard/dashboard-admin/ai-models/`
+  );
+
   const models = data?.models || [];
-  const chartData = models.map((m) => ({ model: m.model_used, avg_confidence: +(m.avg_confidence || 0) * 100 }));
+  const chartData = models.map((m) => ({
+    model: m.model_used,
+    avg_confidence: +(m.avg_confidence || 0) * 100,
+  }));
 
   if (loading) return <div className="p-4">Loading models…</div>;
   if (error) return <div className="p-4 text-red-500">Error: {error.message}</div>;
