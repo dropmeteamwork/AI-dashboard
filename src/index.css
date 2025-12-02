@@ -1,0 +1,84 @@
+@import "tailwindcss";
+/* @plugin "daisyui" {
+  themes: light --default;
+} */
+
+/* Custom Font */
+@font-face {
+  font-family: "outlit";
+  src: url("./assets/fonts/Outfit/Outfit-VariableFont_wght.ttf") format("truetype");
+  font-style: normal;
+}
+
+body {
+  font-family: "outlit", sans-serif;
+}
+
+/* Custom Theme Colors */
+:root {
+  --color-primary: #B1D98E;            /* updated brand green */
+  --color-secondary: #f3f8eba3;
+  --color-accent: #84CC16;
+  --color-shade-grey: #F8F8F8;
+  --color-text-primary: #0A0A0A;
+  --color-text-secondary: #737373;
+  --color-border: #E4E4E4;
+  --color-bg: #FFFFFF;
+  --color-error: #EF4444;
+
+  /* Chart Colors — switched to brand green */
+  --color-chart-line: #B1D98E;
+  --color-chart-bar: #B1D98E;
+  --color-chart-pie: #B1D98E;
+}
+
+/* Custom Shadows */
+.shadow-custom {
+  box-shadow: 0px 1px 2px -1px #0000001A, 0px 1px 3px 0px #0000001A !important;
+}
+
+/* Global Chart Styles */
+.recharts-wrapper text {
+  font-family: "outlit", sans-serif;
+  fill: var(--color-text-secondary);
+}
+
+.recharts-cartesian-axis-tick text {
+  fill: var(--color-text-secondary);
+}
+
+.recharts-tooltip-wrapper {
+  font-family: "outlit", sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+  box-shadow: 0px 1px 2px -1px #0000001A, 0px 1px 3px 0px #0000001A;
+  border-radius: 8px;
+  padding: 0.5rem;
+}
+
+.recharts-legend-item text {
+  font-family: "outlit", sans-serif;
+  fill: var(--color-text-primary);
+}
+
+/* Utility Classes */
+.text-primary-color {
+  color: var(--color-primary) !important;
+}
+
+.text-secondary-color {
+  color: var(--color-secondary) !important;
+}
+
+.bg-primary-color {
+  background-color: var(--color-primary) !important;
+}
+
+.bg-secondary-color {
+  background-color: var(--color-secondary) !important;
+}
+
+.border-primary-color {
+  border-color: var(--color-primary) !important;
+}
