@@ -4,28 +4,44 @@ import { useNavigate } from "react-router";
 const DROP_ME_GREEN = "#6CC04A";
 const LIGHT_GREEN = "#EAF7DA";
 
-// Use universal API base
-const API_BASE = import.meta.env.VITE_API_URL;
+// Correct API Base (from .env)
+const API_BASE = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "";
 
-// Helper for POST requests
-async function postJson(path, payload) {
-  const res = await fetch(`${API_BASE}${path}`, {
+// Unified helper for POST
+async function postJson(endpoint, payload) {
+  // Ensure final URL = BASE + endpoint
+  const url = `${API_BASE}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+
+  const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || data.message || "Something went wrong.");
+  let data = {};
+  try {
+    data = await res.json();
+  } catch (_) {}
+
+  if (!res.ok) {
+    throw new Error(
+      data?.error ||
+      data?.message ||
+      `Request failed — Status ${res.status}`
+    );
+  }
+
   return data;
 }
 
 export default function AuthPage() {
   const navigate = useNavigate();
+
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -53,15 +69,16 @@ export default function AuthPage() {
         localStorage.setItem("refresh_token", data.refresh);
 
         setSuccess("Login successful! Redirecting...");
-        setTimeout(() => navigate("/app/overview"), 800);
+
+        setTimeout(() => navigate("/app/overview"), 700);
       } else {
-        setSuccess("Registration successful! You can now login.");
+        setSuccess("Registration successful! You can now log in.");
         setIsLogin(true);
         setEmail("");
         setPassword("");
       }
     } catch (err) {
-      setError(err.message || "Network error — please check your connection.");
+      setError(err.message || "Network error — please try again.");
     } finally {
       setLoading(false);
     }
@@ -124,13 +141,13 @@ export default function AuthPage() {
               required
               placeholder="Enter username"
               className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2"
-              style={{ borderColor: "#D1D5DB", transition: "0.2s" }}
+              style={{ borderColor: "#D1D5DB" }}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
           </div>
 
-          {/* Email - register only */}
+          {/* Email (Register only) */}
           {!isLogin && (
             <div className="mb-5">
               <label className="font-semibold mb-1 block text-gray-700">
@@ -164,7 +181,7 @@ export default function AuthPage() {
             />
           </div>
 
-          {/* Error Message */}
+          {/* Error */}
           {error && (
             <div
               className="w-full text-sm text-center py-2 mb-4 rounded-xl font-medium"
@@ -174,7 +191,7 @@ export default function AuthPage() {
             </div>
           )}
 
-          {/* Success Message */}
+          {/* Success */}
           {success && (
             <div
               className="w-full text-sm text-center py-2 mb-4 rounded-xl font-medium"
