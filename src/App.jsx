@@ -17,18 +17,22 @@ function ProtectedRoute({ children }) {
 // Handles root redirect based on login
 function RedirectHandler() {
   const token = localStorage.getItem("access_token");
-  return token ? <Navigate to="/app/overview" replace /> : <Navigate to="/login" replace />;
+
+  // If logged in, send to dashboard default tab
+  return token ? (
+    <Navigate to="/app/overview" replace />
+  ) : (
+    <Navigate to="/login" replace />
+  );
 }
 
 export default function App() {
   return (
     <Router>
       <Routes>
+
         {/* Login page */}
         <Route path="/login" element={<AuthPage />} />
-
-        {/* Register page (accessible only when logged in) */}
-        <Route path="/register" element={<AuthPage forceRegister />} />
 
         {/* Dashboard main */}
         <Route
@@ -42,6 +46,7 @@ export default function App() {
 
         {/* Catch-all → redirect based on token */}
         <Route path="*" element={<RedirectHandler />} />
+
       </Routes>
     </Router>
   );
