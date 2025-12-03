@@ -14,8 +14,11 @@ function ProtectedRoute({ children }) {
   return token ? children : <Navigate to="/login" replace />;
 }
 
+// Handles root redirect based on login
 function RedirectHandler() {
   const token = localStorage.getItem("access_token");
+
+  // If logged in, send to dashboard default tab
   return token ? (
     <Navigate to="/app/overview" replace />
   ) : (
@@ -27,10 +30,13 @@ export default function App() {
   return (
     <Router>
       <Routes>
+
+        {/* Login page */}
         <Route path="/login" element={<AuthPage />} />
 
+        {/* Dashboard main */}
         <Route
-          path="/app/overview"
+          path="/app/:tab?"
           element={
             <ProtectedRoute>
               <Dashboard />
@@ -38,7 +44,9 @@ export default function App() {
           }
         />
 
+        {/* Catch-all → redirect based on token */}
         <Route path="*" element={<RedirectHandler />} />
+
       </Routes>
     </Router>
   );
