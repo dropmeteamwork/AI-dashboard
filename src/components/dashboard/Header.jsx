@@ -1,18 +1,33 @@
-// Header.jsx
-import { Monitor, Bell, Settings, Menu } from "lucide-react";
+import { Monitor, Bell, Settings, Menu, UserPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { THEME } from "./theme";
+import { useNavigate } from "react-router";
+import { useEffect, useState } from "react";
 
 const Header = ({ refreshAll, sidebarOpen, setSidebarOpen }) => {
+  const navigate = useNavigate();
+  const [canRegister, setCanRegister] = useState(false);
+
+  useEffect(() => {
+    // Show register button only if user is logged in
+    const token = localStorage.getItem("access_token");
+    setCanRegister(!!token);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    navigate("/login", { replace: true });
+  };
+
   return (
     <header
-      className="px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between bg-white border-b"
+      className="px-4 sm:px-6 py-3 sm:py-4 flex flex-col sm:flex-row items-center justify-between bg-white border-b"
       style={{ background: THEME.pageBg, borderBottom: `1px solid ${THEME.border}` }}
     >
       {/* LEFT */}
-      <div className="flex items-center space-x-4">
-        {/* Hamburger menu for mobile */}
+      <div className="flex items-center space-x-4 w-full sm:w-auto mb-2 sm:mb-0">
         <button
           className="sm:hidden p-2 rounded-md hover:bg-gray-200 transition"
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -41,7 +56,6 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen }) => {
           </div>
         </div>
 
-        {/* Badge */}
         <Badge
           className="hidden sm:flex items-center space-x-2 ml-4"
           style={{
@@ -63,7 +77,20 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen }) => {
       </div>
 
       {/* RIGHT */}
-      <div className="flex items-center space-x-2 sm:space-x-4 mt-2 sm:mt-0">
+      <div className="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto">
+        {canRegister && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center"
+            style={{ borderColor: THEME.subtleBorder }}
+            onClick={() => navigate("/register")}
+          >
+            <UserPlus className="w-4 h-4 mr-1" />
+            Create Admin Account
+          </Button>
+        )}
+
         <Button
           variant="outline"
           size="sm"
@@ -80,11 +107,7 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen }) => {
           size="sm"
           className="flex items-center"
           style={{ borderColor: THEME.subtleBorder }}
-          onClick={() => {
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("refresh_token");
-            window.location.href = "/login";
-          }}
+          onClick={handleLogout}
         >
           <Settings className="w-4 h-4 mr-1" />
           Logout

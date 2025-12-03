@@ -5,17 +5,11 @@ import { RecentPredictionsTimeline } from "@/components/charts/PredictionsCharts
 
 const OverviewTab = ({ overview, topModel }) => {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+    <div className="flex flex-col gap-6">
       <h2 className="text-2xl font-bold">Data Flow Architecture</h2>
 
       {/* KPIs */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
-          gap: 20,
-        }}
-      >
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
         <KPI title="Total Items Processed" value={overview.total} />
         <KPI title="Average Confidence" value={`${overview.avg_confidence}%`} />
         <KPI title="Flagged Items" value={overview.flagged} />
@@ -24,11 +18,10 @@ const OverviewTab = ({ overview, topModel }) => {
 
       {/* Recent Predictions */}
       <div
-        className="rounded-2xl"
+        className="rounded-2xl p-4"
         style={{
           border: `1px solid ${THEME.border}`,
           background: THEME.cardBg,
-          padding: 16,
         }}
       >
         <h3 className="text-lg font-semibold mb-2">Recent Predictions</h3>
