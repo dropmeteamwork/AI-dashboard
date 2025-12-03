@@ -7,11 +7,11 @@ import MachinesTab from "./tabs/MachinesTab";
 import ModelsTab from "./tabs/ModelsTab";
 import AnalyticsTab from "./tabs/AnalyticsTab";
 import FlagsTab from "./tabs/FlagsTab";
-import BrandInsightsTab from "./tabs/BrandInsightsTab"; 
+import BrandInsightsTab from "./tabs/BrandInsightsTab";
 import BrandsTab from "./tabs/BrandsTab";
 import BrandsPrediction from "./tabs/BrandsPrediction";
 
-import { fetchJson } from "./utils";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://web-ai-dashboard.up.railway.app";
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -23,11 +23,19 @@ const Dashboard = () => {
 
   const refreshAll = () => setRefreshKey((k) => k + 1);
 
+  // 🔥 Fetch JSON using correct backend URL
+  const fetchJson = async (endpoint) => {
+    const res = await fetch(`${BASE_URL}${endpoint}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  };
+
   useEffect(() => {
     const load = async () => {
       try {
-        const analyticsData = await fetchJson("/api/analytics/");
-        const machinesData = await fetchJson("/api/machines/");
+        // 🔥 Correct endpoint paths
+        const analyticsData = await fetchJson("/ai_dashboard/analytics/");
+        const machinesData = await fetchJson("/ai_dashboard/machines/");
 
         setAnalytics(analyticsData);
         setMachines(machinesData);
