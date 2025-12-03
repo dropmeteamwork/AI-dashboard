@@ -1,5 +1,5 @@
 // AnalyticsTab.jsx
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   AccuracyByClassChart,
   AvgConfidenceByItemChart,
@@ -18,6 +18,8 @@ const Card = ({ title, subtitle, children, headerBg = "#F2F7F2", actions }) => (
         <div className="text-sm font-semibold text-gray-700">{title}</div>
         {subtitle && <div className="text-xs text-gray-500">{subtitle}</div>}
       </div>
+
+      {/* Right-side action buttons */}
       {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>
     <div className="p-4">{children}</div>
@@ -27,46 +29,34 @@ const Card = ({ title, subtitle, children, headerBg = "#F2F7F2", actions }) => (
 export default function AnalyticsTab({
   accuracyByClass = [],
   avgConfByItem = [],
+  brandsSummary = [],
   modelCompare = [],
   flagFrequency = [],
   decisionDuration = [],
   histogram = [],
 }) {
-  const [brandsSummary, setBrandsSummary] = useState([]);
-  const [loadingBrands, setLoadingBrands] = useState(true);
-  const [brandsError, setBrandsError] = useState(null);
-
-  // Fetch brands summary
-  useEffect(() => {
-    const fetchBrands = async () => {
-      try {
-        const res = await fetch("https://web-ai-dashboard.up.railway.app/ai_dashboard/brand-predictions/");
-        const data = await res.json();
-        setBrandsSummary(data);
-      } catch (err) {
-        console.error("Brands fetch error:", err);
-        setBrandsError(err);
-      } finally {
-        setLoadingBrands(false);
-      }
-    };
-    fetchBrands();
-  }, []);
-
-  // Export CSV
+  
+  // -------- EXPORT BUTTON LOGIC ----------
   const exportBrands = () => {
-    if (!brandsSummary || brandsSummary.length === 0) return;
     const header = "brand,last_seen,total\n";
+
     const rows = brandsSummary
-      .map(b => `${b.brand},${new Date(b.last_seen).toISOString()},${b.total}`)
+      .map(
+        (b) =>
+          `${b.brand},${new Date(b.last_seen).toISOString()},${b.total}`
+      )
       .join("\n");
+
     const csv = header + rows;
+
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement("a");
     a.href = url;
     a.download = "brands_export.csv";
     a.click();
+
     URL.revokeObjectURL(url);
   };
 
@@ -103,44 +93,42 @@ export default function AnalyticsTab({
               </button>
             }
           >
-            {loadingBrands ? (
-              <div className="text-gray-500 text-center py-20">Loading brands...</div>
-            ) : brandsError ? (
-              <div className="text-red-500 text-center py-20">Failed to load brands</div>
-            ) : brandsSummary.length === 0 ? (
-              <div className="text-gray-500 text-center py-20">No brand data</div>
-            ) : (
-              <div className="flex gap-6">
-                {/* Pie Chart */}
-                <div style={{ width: "60%" }}>
-                  <div style={{ height: 360 }}>
-                    <BrandsPieChart data={brandsSummary} top={8} />
-                  </div>
-                </div>
-
-                {/* Scrollable List */}
-                <div style={{ width: "40%", maxHeight: 360 }} className="overflow-y-auto pr-2">
-                  <div className="space-y-3">
-                    {brandsSummary.map((b, i) => (
-                      <div key={b.brand + i} className="flex items-center justify-between bg-white border rounded p-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded bg-green-50 flex items-center justify-center text-green-700 font-semibold">
-                            {String(b.brand).charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="text-sm font-medium">{b.brand}</div>
-                            <div className="text-xs text-gray-400">
-                              last seen: {new Date(b.last_seen).toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-lg font-semibold text-gray-800">{b.total}</div>
-                      </div>
-                    ))}
-                  </div>
+            <div className="flex gap-6">
+              {/* Pie Chart */}
+              <div style={{ width: "60%" }}>
+                <div style={{ height: 360 }}>
+                  <BrandsPieChart data={brandsSummary} top={8} />
                 </div>
               </div>
-            )}
+
+              {/* Scrollable List */}
+              <div
+                style={{ width: "40%", maxHeight: 360 }}
+                className="overflow-y-auto pr-2"
+              >
+                <div className="space-y-3">
+                  {(brandsSummary || []).map((b, i) => (
+                    <div
+                      key={b.brand + i}
+                      className="flex items-center justify-between bg-white border rounded p-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded bg-green-50 flex items-center justify-center text-green-700 font-semibold">
+                          {String(b.brand).charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium">{b.brand}</div>
+                          <div className="text-xs text-gray-400">
+                            last seen: {new Date(b.last_seen).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-lg font-semibold text-gray-800">{b.total}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </Card>
         </div>
 
@@ -154,7 +142,7 @@ export default function AnalyticsTab({
         </div>
       </div>
 
-      {/* Bottom row */}
+      {/* Bottom row AFTER REMOVING the old Top Brands list */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div>
           <Card title="Model Compare">
