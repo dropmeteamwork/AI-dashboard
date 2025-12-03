@@ -20,10 +20,10 @@ const Dashboard = () => {
   const [overview, setOverview] = useState({});
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedBrand, setSelectedBrand] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar toggle
 
   const refreshAll = () => setRefreshKey((k) => k + 1);
 
-  // 🔥 Fetch JSON using correct backend URL
   const fetchJson = async (endpoint) => {
     const res = await fetch(`${BASE_URL}${endpoint}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -33,14 +33,12 @@ const Dashboard = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        // 🔥 Correct endpoint paths
         const analyticsData = await fetchJson("/ai_dashboard/analytics/");
         const machinesData = await fetchJson("/ai_dashboard/machines/");
 
         setAnalytics(analyticsData);
         setMachines(machinesData);
 
-        // Overview calculations
         const accuracy = analyticsData?.accuracy_by_class || [];
         const total = accuracy.reduce((s, c) => s + (c.total || 0), 0);
         const accepted = accuracy.reduce((s, c) => s + (c.accepted || 0), 0);
@@ -85,27 +83,28 @@ const Dashboard = () => {
   )[0];
 
   return (
-    <div className="min-h-screen">
-      <Header refreshAll={refreshAll} />
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      <Header refreshAll={refreshAll} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar - responsive */}
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           overview={overview}
+          sidebarOpen={sidebarOpen}
+          setSidebarOpen={setSidebarOpen}
         />
 
-        <main className="flex-1 p-6">
+        {/* Main content */}
+        <main className="flex-1 p-4 sm:p-6 overflow-auto">
           {activeTab === "overview" && (
             <OverviewTab overview={overview} topModel={topModel} />
           )}
-
           {activeTab === "machines" && <MachinesTab />}
-
           {activeTab === "flags" && <FlagsTab flagFrequency={flagFrequency} />}
-
           {activeTab === "models" && <ModelsTab />}
-
           {activeTab === "analytics" && (
             <AnalyticsTab
               accuracyByClass={accuracyByClass}
@@ -117,11 +116,9 @@ const Dashboard = () => {
               histogram={analytics?.avg_confidence_by_item || []}
             />
           )}
-
           {activeTab === "brand_insights" && (
             <BrandInsightsTab brandsSummary={brandsSummary} />
           )}
-
           {activeTab === "brands" && (
             <BrandsTab
               brandsSummary={brandsSummary}
@@ -131,7 +128,6 @@ const Dashboard = () => {
               setSelectedBrand={setSelectedBrand}
             />
           )}
-
           {activeTab === "brand_predictions" && (
             <BrandsPrediction
               selectedBrand={selectedBrand}
