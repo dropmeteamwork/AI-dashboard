@@ -23,7 +23,7 @@ const OverviewTab = ({ overview, topModel }) => {
       </div>
 
       {/* Recent Predictions */}
-      <div
+      {/* <div
         className="rounded-2xl"
         style={{
           border: `1px solid ${THEME.border}`,
@@ -33,7 +33,7 @@ const OverviewTab = ({ overview, topModel }) => {
       >
         <h3 className="text-lg font-semibold mb-2">Recent Predictions</h3>
         <RecentPredictionsTimeline />
-      </div>
+      </div> */}
     </div>
   );
 };
