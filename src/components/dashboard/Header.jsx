@@ -1,5 +1,5 @@
 // Header.jsx
-import { Monitor, Bell, Settings, Menu } from "lucide-react";
+import { Monitor, RefreshCcw, LogOut, Menu } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { THEME } from "./theme";
@@ -65,6 +65,7 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen }) => {
 
       {/* RIGHT */}
       <div className="flex items-center space-x-2 sm:space-x-4 mt-2 sm:mt-0 w-full sm:w-auto justify-end">
+        {/* Refresh Button */}
         <Button
           variant="outline"
           size="sm"
@@ -72,10 +73,11 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen }) => {
           className="flex items-center justify-center"
           style={{ borderColor: THEME.subtleBorder }}
         >
-          <Bell className="w-4 h-4 mr-1" />
+          <RefreshCcw className="w-4 h-4 mr-1" />
           Refresh
         </Button>
 
+        {/* Logout Button */}
         <Button
           variant="outline"
           size="sm"
@@ -87,7 +89,7 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen }) => {
             window.location.href = "/login";
           }}
         >
-          <Settings className="w-4 h-4 mr-1" />
+          <LogOut className="w-4 h-4 mr-1" />
           Logout
         </Button>
       </div>

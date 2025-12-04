@@ -10,6 +10,8 @@ import FlagsTab from "./tabs/FlagsTab";
 import BrandInsightsTab from "./tabs/BrandInsightsTab";
 import BrandsTab from "./tabs/BrandsTab";
 import BrandsPrediction from "./tabs/BrandsPrediction";
+import ReportTab from "./tabs/ReportTab";
+
 
 const BASE_URL = import.meta.env.VITE_API_URL || "https://web-ai-dashboard.up.railway.app";
 
@@ -134,6 +136,23 @@ const Dashboard = () => {
               setSelectedBrand={setSelectedBrand}
             />
           )}
+
+          {activeTab === "report" && (
+ 
+        <ReportTab
+          overview={overview}
+          topModel={topModel}
+          accuracyByClass={accuracyByClass}
+          avgConfByItem={avgConfByItem}
+          brandsSummary={brandsSummary}
+          modelCompare={modelCompare}
+          flagFrequency={flagFrequency}
+          // decisionDuration={decisionDuration}
+          // histogram={histogram}
+        />
+      )}
+
+
         </main>
       </div>
     </div>
