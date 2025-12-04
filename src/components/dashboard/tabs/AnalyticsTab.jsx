@@ -153,26 +153,32 @@ export default function AnalyticsTab({
         </div>
 
         <div>
-          <Card title="Confidence Score Distribution">
-            <div style={{ height: 280 }}>
-              <AvgConfidenceHistogram data={histogram} />
-            </div>
-          </Card>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="Decision Duration by Item">
-          <div style={{ height: 260 }}>
-            <DecisionDurationChart data={decisionDuration} />
-          </div>
-        </Card>
-
-        <Card title="Accuracy by Class (compact)">
+          <Card title="Accuracy by Class (compact)">
           <div style={{ height: 260 }}>
             <AccuracyByClassChart data={accuracyByClass} />
           </div>
         </Card>
+
+          {/* <Card title="Confidence Score Distribution">
+            <div style={{ height: 280 }}>
+              <AvgConfidenceHistogram data={histogram} />
+            </div>
+          </Card> */}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* <Card title="Decision Duration by Item">
+          <div style={{ height: 260 }}>
+            <DecisionDurationChart data={decisionDuration} />
+          </div>
+        </Card> */}
+
+        {/* <Card title="Accuracy by Class (compact)">
+          <div style={{ height: 260 }}>
+            <AccuracyByClassChart data={accuracyByClass} />
+          </div>
+        </Card> */}
       </div>
     </div>
   );

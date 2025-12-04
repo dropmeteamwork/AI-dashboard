@@ -113,7 +113,7 @@ export default function BrandInsightsTab({ brandsSummary = [] }) {
         </div>
 
         {/* Confidence distribution */}
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
+        {/* <div className="bg-white p-4 rounded-lg shadow-sm border">
           <h3 className="text-md font-semibold mb-3">Confidence Distribution</h3>
           <BarChart width={500} height={280} data={filtered}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -122,7 +122,7 @@ export default function BrandInsightsTab({ brandsSummary = [] }) {
             <Tooltip />
             <Bar dataKey="avg_confidence" fill="#60a5fa" />
           </BarChart>
-        </div>
+        </div> */}
       </div>
 
       {/* History Table */}
