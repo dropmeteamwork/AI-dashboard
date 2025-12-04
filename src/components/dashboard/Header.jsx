@@ -22,20 +22,20 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen }) => {
 
         {/* Logo */}
         <div className="flex items-center space-x-3">
-          <div
+          {/* Logo Image */}
+          <img
+            src="/logo.png" // <-- your logo path here
+            alt="Logo"
             style={{
-              width: 44,
-              height: 44,
-              background: THEME.primary,
+              width: 60,
+              height: 60,
               borderRadius: 10,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              objectFit: "contain",
               boxShadow: THEME.boxShadow,
+              // background: THEME.primary,
             }}
-          >
-            <Monitor className="w-5 h-5" color="#fff" />
-          </div>
+          />
+
           <div className="flex flex-col">
             <h1 className="text-lg sm:text-xl font-semibold">AI Analytics Dashboard</h1>
             <span style={{ fontSize: 12, color: THEME.muted }}>Sustainability Insights</span>
