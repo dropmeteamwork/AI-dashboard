@@ -11,6 +11,7 @@ import BrandInsightsTab from "./tabs/BrandInsightsTab";
 import BrandsTab from "./tabs/BrandsTab";
 import BrandsPrediction from "./tabs/BrandsPrediction";
 import ReportTab from "./tabs/ReportTab";
+import FlaggedItemsTab from "./tabs/FlaggedItemsTab";
 
 
 const BASE_URL = import.meta.env.VITE_API_URL || "https://web-ai-dashboard.up.railway.app";
@@ -106,6 +107,8 @@ const Dashboard = () => {
           )}
           {activeTab === "machines" && <MachinesTab />}
           {activeTab === "flags" && <FlagsTab flagFrequency={flagFrequency} />}
+          {activeTab === "flagged_items" && <FlaggedItemsTab />}
+
           {activeTab === "models" && <ModelsTab />}
           {activeTab === "analytics" && (
             <AnalyticsTab

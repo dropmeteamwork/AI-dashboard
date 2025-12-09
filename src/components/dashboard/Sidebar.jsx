@@ -1,5 +1,5 @@
 // Sidebar.jsx
-import { Activity, Cpu, Flag, Box, BarChart3, Eye, Layers, FileText } from "lucide-react";
+import { Activity, Cpu, Flag, Box, BarChart3, Eye, Layers, FileText, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { THEME } from "./theme";
 import { MachinesStatusList } from "@/components/charts/MachineCharts";
@@ -13,6 +13,8 @@ const tabs = [
   { key: "brands", label: "Brands", icon: Eye },
   { key: "brand_predictions", label: "Brand Predictions", icon: Layers },
   { key: "report", label: "Report", icon: FileText },
+  { key: "flagged_items", label: "Flagged Items", icon: AlertTriangle },
+
 ];
 
 const Sidebar = ({ activeTab, setActiveTab, overview, sidebarOpen, setSidebarOpen }) => {
