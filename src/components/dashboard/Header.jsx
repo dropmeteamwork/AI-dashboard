@@ -27,20 +27,17 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen }) => {
         {/* Logo */}
         <div className="flex items-center space-x-3">
           {/* Logo Image */}
-          <div
+          <img
+            src="/logo.png"
+            alt="Logo"
             style={{
-              width: 44,
-              height: 44,
+              width: 50,
+              height: 50,
               borderRadius: 10,
-              background: "linear-gradient(135deg, #6CC04A 0%, #5BA63E 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 4px 12px rgba(108, 192, 74, 0.3)",
+              objectFit: "contain",
+              display: "block",
             }}
-          >
-            <Monitor className="w-6 h-6 text-white" />
-          </div>
+          />
 
           <div className="flex flex-col">
             <h1 className="text-lg sm:text-xl font-bold text-gray-900">AI Dashboard</h1>

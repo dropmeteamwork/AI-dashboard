@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-
+import { LogIn, Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { COLORS } from "@/constants/colors";
 
 const PRIMARY_GREEN = COLORS.PRIMARY;
-const LIGHT_GREEN = COLORS.TINT_10;
-
 const API_BASE = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "";
 
 // Unified POST helper
@@ -35,9 +33,7 @@ export default function AuthPage() {
   const searchParams = new URLSearchParams(location.search);
   const forceRegister = searchParams.get("register") === "true";
 
-  const [isLogin, setIsLogin] = useState(!forceRegister);
   const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -68,30 +64,7 @@ export default function AuthPage() {
     }
   };
 
-  // Register handler
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    setSuccess("");
 
-    try {
-      const data = await postJson("/ai_dashboard/dashboard-admin/register/", {
-        username,
-        email,
-        password,
-      });
-
-      setSuccess("Registration successful! You can now log in.");
-      setIsLogin(true);
-      setEmail("");
-      setPassword("");
-    } catch (err) {
-      setError(err.message || "Network error — please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div
@@ -111,57 +84,25 @@ export default function AuthPage() {
             className="text-3xl font-bold text-center mb-8"
             style={{ color: PRIMARY_GREEN }}
           >
-            {isLogin ? "Login" : "Register"}
+            Login
           </h1>
 
           {/* Form */}
-          <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-5">
             {/* Email/Username */}
-            {isLogin ? (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Enter your email"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-              </div>
-            ) : (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Username
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Choose a username"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="Enter your email"
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                </div>
-              </>
-            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="Enter your email"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+            </div>
 
             {/* Password */}
             <div>
@@ -203,27 +144,11 @@ export default function AuthPage() {
                 cursor: loading ? "not-allowed" : "pointer",
               }}
             >
-              {loading ? "Processing..." : isLogin ? "Login" : "Register"}
+              {loading ? "Processing..." : "Login"}
             </button>
           </form>
 
-          {/* Toggle Section */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setError("");
-                  setSuccess("");
-                }}
-                className="font-semibold transition-colors"
-                style={{ color: PRIMARY_GREEN }}
-              >
-                {isLogin ? "Register" : "Login"}
-              </button>
-            </p>
-          </div>
+
         </div>
       </div>
     </div>
