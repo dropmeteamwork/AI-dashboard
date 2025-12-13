@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { MachinesPerformanceChart, MachinesStatusList, MachinesKPIs } from "@/components/charts/MachineCharts";
 import { Loader2, AlertCircle, Server } from "lucide-react";
 
+const API_BASE = "https://web-ai-dashboard.up.railway.app";
+
 const MachinesTab = () => {
   const [machines, setMachines] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,7 +14,12 @@ const MachinesTab = () => {
     const fetchMachines = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/dashboard/v2/metrics/machines/`);
+        const token = localStorage.getItem("access_token");
+        const res = await fetch(`${API_BASE}/dashboard/v2/metrics/machines/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setMachines(data);

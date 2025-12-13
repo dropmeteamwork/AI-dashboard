@@ -68,89 +68,273 @@ export default function AuthPage() {
 
   return (
     <div
-      className="min-h-screen flex justify-center items-center px-4"
       style={{
-        background: `linear-gradient(135deg, #C6EF9A 0%, #A8D77D 25%, #E8E4B8 50%, #F4D9A6 75%, #E6C8A0 100%)`,
+        backgroundColor: "#f8fafb",
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "16px",
       }}
     >
-      <div className="w-full max-w-md">
-        {/* Card Container */}
+      {/* Card Container */}
+      <div
+        style={{
+          backgroundColor: "white",
+          borderRadius: "12px",
+          boxShadow: "0 10px 25px rgba(0, 0, 0, 0.08)",
+          maxWidth: "420px",
+          width: "100%",
+          overflow: "hidden",
+        }}
+      >
+        {/* Header Section */}
         <div
-          className="rounded-2xl p-8 shadow-2xl"
-          style={{ backgroundColor: "white" }}
+          style={{
+            backgroundColor: "#f8fafb",
+            borderBottom: "1px solid #e5e7eb",
+            padding: "40px 32px 32px",
+            textAlign: "center",
+          }}
         >
-          {/* Logo/Title */}
-          <h1
-            className="text-3xl font-bold text-center mb-8"
-            style={{ color: PRIMARY_GREEN }}
-          >
-            Login
-          </h1>
+          {/* Logo */}
+          <img
+            src="/logo.png"
+            alt="AI Analytics Dashboard Logo"
+            style={{
+              width: 64,
+              height: 64,
+              marginBottom: 24,
+              display: "block",
+              margin: "0 auto 24px",
+            }}
+          />
 
-          {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
-            {/* Email/Username */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
+          <h1
+            style={{
+              fontSize: "28px",
+              fontWeight: 700,
+              color: "#111827",
+              margin: "0 0 8px 0",
+              letterSpacing: "-0.5px",
+            }}
+          >
+            AI Analytics
+          </h1>
+          <p
+            style={{
+              fontSize: "14px",
+              color: "#6b7280",
+              margin: 0,
+            }}
+          >
+            Dashboard Administrator Login
+          </p>
+        </div>
+
+        {/* Form Section */}
+        <div style={{ padding: "32px" }}>
+          {/* Error Alert */}
+          {error && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                backgroundColor: "#fef2f2",
+                border: "1px solid #fee2e2",
+                color: "#991b1b",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                marginBottom: "20px",
+                fontSize: "14px",
+              }}
+            >
+              <AlertCircle size={18} style={{ flexShrink: 0 }} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Success Alert */}
+          {success && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                backgroundColor: "#f0fdf4",
+                border: "1px solid #dcfce7",
+                color: "#166534",
+                padding: "12px 16px",
+                borderRadius: "8px",
+                marginBottom: "20px",
+                fontSize: "14px",
+              }}
+            >
+              <CheckCircle size={18} style={{ flexShrink: 0 }} />
+              <span>{success}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleLogin}>
+            {/* Username Field */}
+            <div style={{ marginBottom: "20px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "8px",
+                  color: "#111827",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                }}
+              >
+                Username
               </label>
               <input
                 type="text"
-                required
-                placeholder="Enter your email"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your username"
+                disabled={loading}
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  boxSizing: "border-box",
+                  color: "#111827",
+                  backgroundColor: "#ffffff",
+                  transition: "all 0.2s ease",
+                  outline: "none",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = PRIMARY_GREEN;
+                  e.target.style.boxShadow = `0 0 0 3px rgba(108, 192, 74, 0.1)`;
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#e5e7eb";
+                  e.target.style.boxShadow = "none";
+                }}
               />
             </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            {/* Password Field */}
+            <div style={{ marginBottom: "28px" }}>
+              <label
+                style={{
+                  display: "block",
+                  marginBottom: "8px",
+                  color: "#111827",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                }}
+              >
                 Password
               </label>
               <input
                 type="password"
-                required
-                placeholder="Enter your password"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                disabled={loading}
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  boxSizing: "border-box",
+                  color: "#111827",
+                  backgroundColor: "#ffffff",
+                  transition: "all 0.2s ease",
+                  outline: "none",
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = PRIMARY_GREEN;
+                  e.target.style.boxShadow = `0 0 0 3px rgba(108, 192, 74, 0.1)`;
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = "#e5e7eb";
+                  e.target.style.boxShadow = "none";
+                }}
               />
             </div>
 
-            {/* Error Message */}
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-700">{error}</p>
-              </div>
-            )}
-
-            {/* Success Message */}
-            {success && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-700">{success}</p>
-              </div>
-            )}
-
-            {/* Submit Button */}
+            {/* Login Button */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-lg font-bold text-white transition-all duration-200"
               style={{
-                backgroundColor: PRIMARY_GREEN,
-                opacity: loading ? 0.7 : 1,
+                width: "100%",
+                padding: "11px 16px",
+                backgroundColor: loading ? PRIMARY_GREEN : PRIMARY_GREEN,
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: 600,
                 cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.85 : 1,
+                transition: "all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+              }}
+              onMouseEnter={(e) => {
+                if (!loading) {
+                  e.target.style.backgroundColor = COLORS.DARK;
+                  e.target.style.boxShadow = "0 8px 16px rgba(108, 192, 74, 0.3)";
+                  e.target.style.transform = "translateY(-1px)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!loading) {
+                  e.target.style.backgroundColor = PRIMARY_GREEN;
+                  e.target.style.boxShadow = "none";
+                  e.target.style.transform = "translateY(0)";
+                }
               }}
             >
-              {loading ? "Processing..." : "Login"}
+              {loading ? (
+                <>
+                  <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  <LogIn size={16} />
+                  Sign In
+                </>
+              )}
             </button>
           </form>
 
-
+          {/* Footer Info */}
+          <div
+            style={{
+              marginTop: "24px",
+              paddingTop: "24px",
+              borderTop: "1px solid #e5e7eb",
+              textAlign: "center",
+              fontSize: "12px",
+              color: "#9ca3af",
+            }}
+          >
+            Secure Login • AI Analytics Dashboard
+          </div>
         </div>
       </div>
+
+      {/* Decorative Background Elements */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

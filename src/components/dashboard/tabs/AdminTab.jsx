@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Plus, Trash2, Edit2, Users, Check, X, Loader2 } from "lucide-react";
 import { COLORS } from "@/constants/colors";
 
@@ -38,6 +38,12 @@ const AdminTab = () => {
           Authorization: `Bearer ${token}`,
         },
       });
+
+      if (res.status === 404) {
+        setAdmins([]);
+        setError("Admin management endpoint not available on this server");
+        return;
+      }
 
       if (!res.ok) throw new Error("Failed to fetch admins");
       const data = await res.json();
@@ -259,6 +265,9 @@ const AdminTab = () => {
                 </>
               )}
             </DialogTitle>
+            <DialogDescription>
+              {editingId ? "Update admin account details" : "Create a new administrator account"}
+            </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">

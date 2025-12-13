@@ -11,7 +11,7 @@ import {
 } from "../../charts/ChartsAnalytics";
 import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
-import { TrendingUp, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { TrendingUp, AlertCircle, CheckCircle, Clock, Activity, Star, Zap, AlertTriangle } from "lucide-react";
 import { COLORS } from "@/constants/colors";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://web-ai-dashboard.up.railway.app";
@@ -90,7 +90,17 @@ export default function AnalyticsTab({
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`${API_BASE}/ai_dashboard/processing-trends/`);
+        const token = localStorage.getItem("access_token");
+        const res = await fetch(`${API_BASE}/ai_dashboard/processing-trends/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.status === 404) {
+          // Endpoint not available, skip
+          setTrends([]);
+          return;
+        }
         if (res.ok) {
           const data = await res.json();
           setTrends(Array.isArray(data) ? data : []);
@@ -329,7 +339,10 @@ export default function AnalyticsTab({
       <Card title="Key Insights" subtitle="Performance summary and recommendations">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="font-semibold text-blue-900 mb-2">📊 Processing Volume</div>
+            <div className="flex items-center gap-2 mb-2">
+              <Activity size={18} className="text-blue-600" />
+              <div className="font-semibold text-blue-900">Processing Volume</div>
+            </div>
             <div className="text-sm text-blue-800">
               Total items processed: <strong>{insights.total.toLocaleString()}</strong>
               {insights.total > 0 && (
@@ -342,7 +355,10 @@ export default function AnalyticsTab({
           </div>
 
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="font-semibold text-green-900 mb-2">✓ Top Performer</div>
+            <div className="flex items-center gap-2 mb-2">
+              <Star size={18} className="text-green-600" />
+              <div className="font-semibold text-green-900">Top Performer</div>
+            </div>
             <div className="text-sm text-green-800">
               Brand: <strong>{insights.topBrand?.brand || "N/A"}</strong>
               {insights.topBrand && (
@@ -355,7 +371,10 @@ export default function AnalyticsTab({
           </div>
 
           <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-            <div className="font-semibold text-purple-900 mb-2">🤖 Model Status</div>
+            <div className="flex items-center gap-2 mb-2">
+              <Zap size={18} className="text-purple-600" />
+              <div className="font-semibold text-purple-900">Model Status</div>
+            </div>
             <div className="text-sm text-purple-800">
               Most used: <strong>{insights.topModel?.model_used || "N/A"}</strong>
               {insights.topModel && (
@@ -368,7 +387,10 @@ export default function AnalyticsTab({
           </div>
 
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <div className="font-semibold text-orange-900 mb-2">⚠️ Quality Metrics</div>
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle size={18} className="text-orange-600" />
+              <div className="font-semibold text-orange-900">Quality Metrics</div>
+            </div>
             <div className="text-sm text-orange-800">
               Avg confidence: <strong>{insights.avgConf}%</strong>
               <br />

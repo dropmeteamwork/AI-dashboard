@@ -1,5 +1,5 @@
 // Dashboard.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import OverviewTab from "./tabs/OverviewTab";
@@ -13,6 +13,7 @@ import BrandsPrediction from "./tabs/BrandsPrediction";
 import ReportTab from "./tabs/ReportTab";
 import FlaggedItemsTab from "./tabs/FlaggedItemsTab";
 import AdminTab from "./tabs/AdminTab";
+import { filterAnalyticsDataByPeriod, recalculateOverview } from "@/utils/dateFilter";
 
 
 const BASE_URL = import.meta.env.VITE_API_URL || "https://web-ai-dashboard.up.railway.app";
@@ -25,6 +26,7 @@ const Dashboard = () => {
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedBrand, setSelectedBrand] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false); // Mobile sidebar toggle
+  const [timePeriod, setTimePeriod] = useState("all"); // Add time period state
 
   const refreshAll = () => setRefreshKey((k) => k + 1);
 
@@ -77,20 +79,45 @@ const Dashboard = () => {
     load();
   }, [refreshKey]);
 
-  const accuracyByClass = analytics?.accuracy_by_class || [];
-  const avgConfByItem = analytics?.avg_confidence_by_item || [];
-  const flagFrequency = analytics?.flag_frequency || [];
-  const modelCompare = analytics?.model_compare || analytics?.predictions_by_model || [];
-  const brandsSummary = analytics?.brands_summary || [];
+  // Filter analytics data based on selected time period
+  const filteredAnalytics = useMemo(() => {
+    if (timePeriod === "all") {
+      return analytics;
+    }
+    
+    // Apply date-based filtering for selected time period
+    return filterAnalyticsDataByPeriod(analytics, timePeriod);
+  }, [analytics, timePeriod]);
 
-  const topModel = [...(analytics?.predictions_by_model || [])].sort(
+  // Recalculate overview based on filtered data
+  const filteredOverview = useMemo(() => {
+    const baseOverview = recalculateOverview(filteredAnalytics);
+    return {
+      ...baseOverview,
+      active_machines: overview.active_machines, // Keep machines count from unfiltered data
+    };
+  }, [filteredAnalytics, overview.active_machines]);
+
+  const accuracyByClass = filteredAnalytics?.accuracy_by_class || [];
+  const avgConfByItem = filteredAnalytics?.avg_confidence_by_item || [];
+  const flagFrequency = filteredAnalytics?.flag_frequency || [];
+  const modelCompare = filteredAnalytics?.model_compare || filteredAnalytics?.predictions_by_model || [];
+  const brandsSummary = filteredAnalytics?.brands_summary || [];
+
+  const topModel = [...(filteredAnalytics?.predictions_by_model || [])].sort(
     (a, b) => b.count - a.count
   )[0];
 
   return (
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f8fafb" }}>
       {/* Header */}
-      <Header refreshAll={refreshAll} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+      <Header
+        refreshAll={refreshAll}
+        sidebarOpen={sidebarOpen}
+        setSidebarOpen={setSidebarOpen}
+        timePeriod={timePeriod}
+        onTimePeriodChange={setTimePeriod}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar - responsive */}
@@ -105,7 +132,7 @@ const Dashboard = () => {
         {/* Main content */}
         <main className="flex-1 overflow-auto" style={{ padding: "24px", backgroundColor: "#f8fafb" }}>
           {activeTab === "overview" && (
-            <OverviewTab overview={overview} topModel={topModel} />
+            <OverviewTab overview={filteredOverview} topModel={topModel} />
           )}
           {activeTab === "machines" && <MachinesTab />}
           {activeTab === "flags" && <FlagsTab flagFrequency={flagFrequency} />}
