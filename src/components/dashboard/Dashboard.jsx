@@ -54,10 +54,11 @@ const Dashboard = () => {
               avgArr.length
             : 0;
 
-        const flagCount =
-          accuracy.reduce((s, c) => s + (c.flag_count || 0), 0) ||
-          analyticsData?.flagged_count ||
-          0;
+        // Calculate flagged count from flag_frequency data (more accurate)
+        const flagFreq = analyticsData?.flag_frequency || [];
+        const flagCount = flagFreq.length > 0 
+          ? flagFreq.reduce((s, f) => s + (f.count || 0), 0)
+          : (accuracy.reduce((s, c) => s + (c.flag_count || 0), 0) || analyticsData?.flagged_count || 0);
 
         setOverview({
           total,
@@ -86,7 +87,7 @@ const Dashboard = () => {
   )[0];
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f8fafb" }}>
       {/* Header */}
       <Header refreshAll={refreshAll} sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
@@ -101,7 +102,7 @@ const Dashboard = () => {
         />
 
         {/* Main content */}
-        <main className="flex-1 p-4 sm:p-6 overflow-auto">
+        <main className="flex-1 overflow-auto" style={{ padding: "24px", backgroundColor: "#f8fafb" }}>
           {activeTab === "overview" && (
             <OverviewTab overview={overview} topModel={topModel} />
           )}

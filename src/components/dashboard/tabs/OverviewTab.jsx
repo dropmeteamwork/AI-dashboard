@@ -15,74 +15,29 @@ import {
 } from "lucide-react";
 
 const OverviewTab = ({ overview, topModel }) => {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch comprehensive stats
-  useEffect(() => {
-    const fetchStats = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(
-          "https://web-ai-dashboard.up.railway.app/ai_dashboard/brand-predictions/?page_size=1000"
-        );
-        const data = await res.json();
-        const items = data.results || data;
-
-        if (items && items.length > 0) {
-          const totalItems = items.length;
-          const totalBrands = new Set(items.map(i => i.brand).filter(Boolean)).size;
-          
-          // Calculate confidence - handle different possible field names
-          const confidenceValues = items.map(i => {
-            const conf = i.confidence !== undefined ? i.confidence : 
-                        i.avg_confidence !== undefined ? i.avg_confidence :
-                        0;
-            // Convert to percentage if it's between 0-1
-            return conf > 1 ? conf : conf * 100;
-          });
-          const avgConfidence = (confidenceValues.reduce((a, b) => a + b, 0) / totalItems).toFixed(1);
-          
-          // Count different statuses - check various possible field names
-          const flaggedCount = items.filter(i => 
-            i.flagged === true || 
-            i.flag || 
-            i.is_flagged === true
-          ).length;
-          
-          const acceptedCount = items.filter(i => 
-            i.status === 'accepted' || 
-            i.status === 'ACCEPTED' ||
-            i.is_accepted === true
-          ).length;
-          
-          const rejectedCount = items.filter(i => 
-            i.status === 'rejected' || 
-            i.status === 'REJECTED' ||
-            i.is_rejected === true
-          ).length;
-          
-          // If no status data, calculate based on flagged
-          const processedCount = totalItems - flaggedCount;
-          
-          setStats({
-            totalItems,
-            totalBrands,
-            avgConfidence: Math.min(100, avgConfidence),
-            flaggedCount,
-            acceptedCount: acceptedCount || processedCount,
-            rejectedCount,
-            acceptanceRate: acceptedCount > 0 ? ((acceptedCount / totalItems) * 100).toFixed(1) : ((processedCount / totalItems) * 100).toFixed(1)
-          });
-        }
-      } catch (err) {
-        console.error("Error fetching overview stats:", err);
-      } finally {
-        setLoading(false);
-      }
+  // Use the overview data passed from Dashboard (already has correct analytics data)
+  const stats = useMemo(() => {
+    if (!overview || !overview.total) return null;
+    
+    return {
+      totalItems: overview.total || 0,
+      accepted: overview.accepted || 0,
+      rejected: overview.rejected || 0,
+      flagged: overview.flagged || 0,
+      avgConfidence: overview.avg_confidence || 0,
+      acceptanceRate: overview.total > 0 
+        ? ((overview.accepted / overview.total) * 100).toFixed(1)
+        : 0,
+      rejectionRate: overview.total > 0
+        ? ((overview.rejected / overview.total) * 100).toFixed(1)
+        : 0,
+      flagRate: overview.total > 0
+        ? ((overview.flagged / overview.total) * 100).toFixed(1)
+        : 0,
     };
-    fetchStats();
-  }, []);
+  }, [overview]);
 
   const StatCard = ({ icon: Icon, title, value, subtitle, color }) => (
     <Card className="p-6 border border-gray-200 hover:shadow-lg transition">
@@ -113,7 +68,7 @@ const OverviewTab = ({ overview, topModel }) => {
     </div>
   );
 
-  if (loading) {
+  if (!stats) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="text-center">
@@ -146,30 +101,30 @@ const OverviewTab = ({ overview, topModel }) => {
           <StatCard
             icon={BarChart3}
             title="Total Items Processed"
-            value={stats?.totalItems?.toLocaleString() || 0}
-            subtitle="All detections"
+            value={stats.totalItems.toLocaleString()}
+            subtitle="All items"
             color="text-blue-700"
-          />
-          <StatCard
-            icon={Target}
-            title="Brands Detected"
-            value={stats?.totalBrands || 0}
-            subtitle="Unique brands"
-            color="text-purple-700"
           />
           <StatCard
             icon={Zap}
             title="Average Confidence"
-            value={`${stats?.avgConfidence || 0}%`}
+            value={`${stats.avgConfidence}%`}
             subtitle="Detection accuracy"
             color="text-amber-700"
           />
           <StatCard
             icon={TrendingUp}
             title="Acceptance Rate"
-            value={`${stats?.acceptanceRate || 0}%`}
+            value={`${stats.acceptanceRate}%`}
             subtitle="Approved predictions"
-            color="text-white" style={{ color: "#6CC04A" }}
+            color="text-emerald-700"
+          />
+          <StatCard
+            icon={CheckCircle}
+            title="Active Machines"
+            value={overview?.active_machines || "—"}
+            subtitle="System status"
+            color="text-green-700"
           />
         </div>
       </div>
@@ -183,7 +138,7 @@ const OverviewTab = ({ overview, topModel }) => {
               <CheckCircle className="h-6 w-6" style={{ color: "#6CC04A" }} />
               <span className="font-semibold text-gray-900">Accepted</span>
             </div>
-            <div className="text-3xl font-bold" style={{ color: "#6CC04A" }}>{stats?.acceptedCount || 0}</div>
+            <div className="text-3xl font-bold" style={{ color: "#6CC04A" }}>{stats.accepted.toLocaleString()}</div>
             <div className="text-sm text-gray-600 mt-2">Verified predictions</div>
           </Card>
 
@@ -192,8 +147,8 @@ const OverviewTab = ({ overview, topModel }) => {
               <AlertCircle className="h-6 w-6 text-red-600" />
               <span className="font-semibold text-gray-900">Flagged</span>
             </div>
-            <div className="text-3xl font-bold text-red-700">{stats?.flaggedCount || 0}</div>
-            <div className="text-sm text-gray-600 mt-2">Items for review</div>
+            <div className="text-3xl font-bold text-red-700">{stats.flagged.toLocaleString()}</div>
+            <div className="text-sm text-gray-600 mt-2">{`${stats.flagRate}% of total`}</div>
           </Card>
 
           <Card className="p-6 border border-orange-200 bg-orange-50">
@@ -201,8 +156,8 @@ const OverviewTab = ({ overview, topModel }) => {
               <Clock className="h-6 w-6 text-orange-600" />
               <span className="font-semibold text-gray-900">Rejected</span>
             </div>
-            <div className="text-3xl font-bold text-orange-700">{stats?.rejectedCount || 0}</div>
-            <div className="text-sm text-gray-600 mt-2">Declined predictions</div>
+            <div className="text-3xl font-bold text-orange-700">{stats.rejected.toLocaleString()}</div>
+            <div className="text-sm text-gray-600 mt-2">{`${stats.rejectionRate}% of total`}</div>
           </Card>
         </div>
       </div>
@@ -270,12 +225,12 @@ const OverviewTab = ({ overview, topModel }) => {
         <h3 className="font-bold text-gray-900 mb-4">System Status</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold" style={{ color: "#6CC04A" }}>{stats?.totalBrands || 0}</div>
-            <p className="text-xs text-gray-600 mt-1">Active Brands</p>
+            <div className="text-2xl font-bold" style={{ color: "#6CC04A" }}>{stats.totalItems}</div>
+            <p className="text-xs text-gray-600 mt-1">Total Processed</p>
           </div>
           <div className="p-4 bg-gray-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">{((stats?.totalItems || 0) / (stats?.totalBrands || 1)).toFixed(0)}</div>
-            <p className="text-xs text-gray-600 mt-1">Avg. Items/Brand</p>
+            <div className="text-2xl font-bold text-blue-600">{stats.acceptanceRate}%</div>
+            <p className="text-xs text-gray-600 mt-1">Acceptance Rate</p>
           </div>
           <div className="p-4 bg-gray-50 rounded-lg">
             <div className="text-2xl font-bold text-purple-600">{topModel?.model_used || "—"}</div>

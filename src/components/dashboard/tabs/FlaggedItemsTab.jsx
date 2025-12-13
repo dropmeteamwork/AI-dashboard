@@ -152,10 +152,20 @@ const FlaggedItemsTab = () => {
             {filteredItems.map((item) => (
               <div
                 key={item.id}
-                onClick={() => setSelectedItem(item)}
-                className="cursor-pointer"
+                className="group relative cursor-pointer"
               >
                 <FlaggedItemCard item={item} />
+                {/* Action Overlay */}
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 rounded-lg transition-all duration-200 flex items-end justify-center p-3 opacity-0 group-hover:opacity-100">
+                  <Button
+                    onClick={() => setSelectedItem(item)}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white gap-2 font-medium"
+                    size="sm"
+                  >
+                    <Check className="h-4 w-4" />
+                    Correct Brand
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -205,7 +215,10 @@ const FlaggedItemsTab = () => {
       <Dialog open={!!selectedItem} onOpenChange={(open) => !open && setSelectedItem(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Update Brand</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Check className="h-5 w-5 text-green-600" />
+              Correct Brand
+            </DialogTitle>
           </DialogHeader>
           
           {selectedItem && (
@@ -236,37 +249,50 @@ const FlaggedItemsTab = () => {
               </div>
 
               {/* Brand Update Section */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-gray-700">Select New Brand</label>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {availableBrands.map((brand) => (
-                    <Button
-                      key={brand}
-                      onClick={() => {
-                        setNewBrand(brand);
-                      }}
-                      className={`w-full text-left justify-start ${
-                        newBrand === brand
-                          ? "bg-green-600 hover:bg-green-700 text-white"
-                          : "bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-300"
-                      }`}
-                      variant="outline"
-                    >
-                      {brand}
-                    </Button>
-                  ))}
+              <div className="space-y-4">
+                {/* Available Brands */}
+                <div>
+                  <label className="text-sm font-semibold text-gray-900 block mb-3 flex items-center gap-2">
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-bold">Popular</span>
+                    Select from Known Brands
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2">
+                    {availableBrands.length > 0 ? (
+                      availableBrands.map((brand) => (
+                        <Button
+                          key={brand}
+                          onClick={() => setNewBrand(brand)}
+                          className={`text-sm font-medium transition-all ${
+                            newBrand === brand
+                              ? "bg-green-600 hover:bg-green-700 text-white shadow-md"
+                              : "bg-gray-100 hover:bg-gray-200 text-gray-900 border border-gray-300"
+                          }`}
+                          size="sm"
+                          variant="outline"
+                        >
+                          {brand}
+                        </Button>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 col-span-2">No brands available</p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Custom Brand Input */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-2">Or Enter New Brand</label>
+                  <label className="text-sm font-semibold text-gray-900 block mb-2 flex items-center gap-2">
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold">Custom</span>
+                    Or Enter a New Brand
+                  </label>
                   <Input
                     type="text"
                     placeholder="Type a brand name..."
                     value={newBrand}
                     onChange={(e) => setNewBrand(e.target.value)}
-                    className="w-full"
+                    className="w-full border-gray-300 focus:border-green-500 focus:ring-green-500"
                   />
+                  <p className="text-xs text-gray-500 mt-1">You can enter any brand name not in the list above</p>
                 </div>
               </div>
 
