@@ -1,15 +1,24 @@
 // Header.jsx
-import { RefreshCcw, LogOut, Menu, Bell, Calendar, Search, Clock } from "lucide-react";
+import { RefreshCcw, LogOut, Menu, Bell, Calendar, Search, Clock, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { THEME } from "./theme";
 import { COLORS } from "@/constants/colors";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const Header = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod = "all", onTimePeriodChange }) => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const timePeriods = [
     { value: "day", label: "Today" },
@@ -26,7 +35,7 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod = "all", o
         background: "white",
         borderBottom: "1px solid #e5e7eb",
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-        padding: "16px 24px",
+        padding: isMobile ? "12px 16px" : "16px 24px",
       }}
     >
       {/* Main Header Row */}
@@ -36,28 +45,31 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod = "all", o
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: "24px",
-          marginBottom: "12px",
+          gap: isMobile ? "8px" : "24px",
+          marginBottom: isMobile ? "8px" : "12px",
         }}
       >
         {/* LEFT - Logo and Branding */}
-        <div style={{ display: "flex", alignItems: "center", gap: "16px", flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "8px" : "16px", flex: 1, minWidth: 0 }}>
           {/* Hamburger menu for mobile */}
           <button
             style={{
-              display: "none",
+              display: isMobile ? "flex" : "none",
               padding: "8px",
               borderRadius: "8px",
               backgroundColor: "transparent",
               border: "none",
               cursor: "pointer",
               transition: "all 0.2s ease",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
             }}
             onMouseEnter={(e) => (e.target.style.backgroundColor = "#f3f4f6")}
             onMouseLeave={(e) => (e.target.style.backgroundColor = "transparent")}
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
-            <Menu style={{ width: 24, height: 24, color: "#6b7280" }} />
+            <Menu style={{ width: 20, height: 20, color: "#6b7280" }} />
           </button>
 
           {/* Logo and Title */}
@@ -107,7 +119,7 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod = "all", o
               background: "linear-gradient(135deg, #f0fdf4 0%, #f6fff2 100%)",
               border: `2px solid ${COLORS.PRIMARY}`,
               color: COLORS.PRIMARY,
-              display: "flex",
+              display: isMobile ? "none" : "flex",
               alignItems: "center",
               gap: "8px",
               padding: "6px 14px",
@@ -137,7 +149,7 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod = "all", o
           style={{
             display: "flex",
             alignItems: "center",
-            gap: "12px",
+            gap: isMobile ? "6px" : "12px",
             flexShrink: 0,
           }}
         >
@@ -152,7 +164,7 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod = "all", o
               padding: "8px 12px",
               border: "1px solid #e5e7eb",
               transition: "all 0.2s ease",
-              width: searchOpen ? "200px" : "0",
+              width: searchOpen ? (isMobile ? "120px" : "200px") : "0",
               overflow: "hidden",
             }}
             onFocus={() => setSearchOpen(true)}

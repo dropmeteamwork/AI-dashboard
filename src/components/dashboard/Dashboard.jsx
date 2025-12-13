@@ -1,6 +1,6 @@
 // Dashboard.jsx
 import { useEffect, useState, useMemo } from "react";
-import Header from "./Header";
+import Header from "./HeaderResponsive";
 import Sidebar from "./Sidebar";
 import OverviewTab from "./tabs/OverviewTab";
 import MachinesTab from "./tabs/MachinesTab";
