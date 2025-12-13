@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useNavigate, useLocation } from "react-router-dom";
 
-const PRIMARY_GREEN = "#6CC04A";
-const LIGHT_GREEN = "#EAF7DA";
+import { COLORS } from "@/constants/colors";
+
+const PRIMARY_GREEN = COLORS.PRIMARY;
+const LIGHT_GREEN = COLORS.TINT_10;
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace(/\/$/, "") || "";
 
@@ -94,132 +96,135 @@ export default function AuthPage() {
   return (
     <div
       className="min-h-screen flex justify-center items-center px-4"
-      style={{ backgroundColor: "#F9FAFB" }}
+      style={{
+        background: `linear-gradient(135deg, #C6EF9A 0%, #A8D77D 25%, #E8E4B8 50%, #F4D9A6 75%, #E6C8A0 100%)`,
+      }}
     >
-      <div
-        className="shadow-2xl w-full max-w-xl rounded-2xl p-10 border"
-        style={{ background: "white", borderColor: "#E5E7EB" }}
-      >
-        {/* Toggle Buttons */}
-        <div className="flex mb-8">
-          <button
-            onClick={() => setIsLogin(true)}
-            className="flex-1 py-3 font-semibold rounded-l-xl transition-all"
-            style={{
-              backgroundColor: isLogin ? PRIMARY_GREEN : "#E5E7EB",
-              color: isLogin ? "white" : "#374151",
-            }}
-          >
-            Login
-          </button>
-          <button
-            onClick={() => setIsLogin(false)}
-            className="flex-1 py-3 font-semibold rounded-r-xl transition-all"
-            style={{
-              backgroundColor: !isLogin ? PRIMARY_GREEN : "#E5E7EB",
-              color: !isLogin ? "white" : "#374151",
-            }}
-          >
-            Register
-          </button>
-        </div>
-
-        {/* Page Title */}
-        <h2
-          className="text-3xl font-extrabold text-center mb-6"
-          style={{ color: PRIMARY_GREEN }}
+      <div className="w-full max-w-md">
+        {/* Card Container */}
+        <div
+          className="rounded-2xl p-8 shadow-2xl"
+          style={{ backgroundColor: "white" }}
         >
-          {isLogin ? "Welcome Back!" : "Create Admin Account"}
-        </h2>
+          {/* Logo/Title */}
+          <h1
+            className="text-3xl font-bold text-center mb-8"
+            style={{ color: PRIMARY_GREEN }}
+          >
+            {isLogin ? "Login" : "Register"}
+          </h1>
 
-        {/* Form */}
-        <form
-          onSubmit={isLogin ? handleLogin : handleRegister}
-          className="flex flex-col"
-        >
-          {/* Username */}
-          <div className="mb-5">
-            <label className="font-semibold mb-1 block text-gray-700">
-              Username
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Enter username"
-              className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2"
-              style={{ borderColor: "#D1D5DB" }}
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
+          {/* Form */}
+          <form onSubmit={isLogin ? handleLogin : handleRegister} className="space-y-5">
+            {/* Email/Username */}
+            {isLogin ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Enter your email"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Choose a username"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
 
-          {/* Email - only register */}
-          {!isLogin && (
-            <div className="mb-5">
-              <label className="font-semibold mb-1 block text-gray-700">
-                Email
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="Enter your email"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
               </label>
               <input
-                type="email"
+                type="password"
                 required
-                placeholder="Enter email"
-                className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2"
-                style={{ borderColor: "#D1D5DB" }}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your password"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-          )}
 
-          {/* Password */}
-          <div className="mb-5">
-            <label className="font-semibold mb-1 block text-gray-700">
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              placeholder="Enter password"
-              className="w-full px-4 py-3 rounded-xl border focus:outline-none focus:ring-2"
-              style={{ borderColor: "#D1D5DB" }}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            {/* Error Message */}
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            )}
+
+            {/* Success Message */}
+            {success && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm text-green-700">{success}</p>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-lg font-bold text-white transition-all duration-200"
+              style={{
+                backgroundColor: PRIMARY_GREEN,
+                opacity: loading ? 0.7 : 1,
+                cursor: loading ? "not-allowed" : "pointer",
+              }}
+            >
+              {loading ? "Processing..." : isLogin ? "Login" : "Register"}
+            </button>
+          </form>
+
+          {/* Toggle Section */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600">
+              {isLogin ? "Don't have an account? " : "Already have an account? "}
+              <button
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError("");
+                  setSuccess("");
+                }}
+                className="font-semibold transition-colors"
+                style={{ color: PRIMARY_GREEN }}
+              >
+                {isLogin ? "Register" : "Login"}
+              </button>
+            </p>
           </div>
-
-          {/* Error Message */}
-          {error && (
-            <div
-              className="w-full text-sm text-center py-2 mb-4 rounded-xl font-medium"
-              style={{ background: "#FEE2E2", color: "#B91C1C" }}
-            >
-              {error}
-            </div>
-          )}
-
-          {/* Success Message */}
-          {success && (
-            <div
-              className="w-full text-sm text-center py-2 mb-4 rounded-xl font-medium"
-              style={{ background: LIGHT_GREEN, color: PRIMARY_GREEN }}
-            >
-              {success}
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 rounded-xl font-bold text-white shadow-md transition-all"
-            style={{
-              backgroundColor: PRIMARY_GREEN,
-              opacity: loading ? 0.7 : 1,
-            }}
-          >
-            {loading ? "Processing..." : isLogin ? "Login" : "Register"}
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   );

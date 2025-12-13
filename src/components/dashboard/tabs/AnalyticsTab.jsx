@@ -1,5 +1,5 @@
 // AnalyticsTab.jsx
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   AccuracyByClassChart,
   AvgConfidenceByItemChart,
@@ -9,6 +9,12 @@ import {
   ModelCompareChart,
   DecisionDurationChart,
 } from "../../charts/ChartsAnalytics";
+import { Badge } from "@/components/ui/badge";
+import { LineChart, Line, AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { TrendingUp, AlertCircle, CheckCircle, Clock } from "lucide-react";
+import { COLORS } from "@/constants/colors";
+
+const API_BASE = import.meta.env.VITE_API_URL || "https://web-ai-dashboard.up.railway.app";
 
 /* Card wrapper */
 const Card = ({ title, subtitle, children, headerBg = "#F2F7F2", actions }) => (
@@ -26,6 +32,45 @@ const Card = ({ title, subtitle, children, headerBg = "#F2F7F2", actions }) => (
   </div>
 );
 
+/* Stat Card */
+const StatCard = ({ icon: Icon, title, value, subtitle, color = "green" }) => {
+  let bgColorStyle, textColorStyle, borderColorStyle;
+  if (color === "green") {
+    bgColorStyle = { backgroundColor: COLORS.TINT_10 };
+    textColorStyle = { color: COLORS.PRIMARY };
+    borderColorStyle = { borderColor: `${COLORS.PRIMARY}30` };
+  } else if (color === "red") {
+    bgColorStyle = { backgroundColor: "#fef2f2" };
+    textColorStyle = { color: "#b91c1c" };
+    borderColorStyle = { borderColor: "#fecaca" };
+  } else {
+    bgColorStyle = { backgroundColor: "#f0f9ff" };
+    textColorStyle = { color: "#1e40af" };
+    borderColorStyle = { borderColor: "#bfdbfe" };
+  }
+
+  const combinedStyle = {
+    ...bgColorStyle,
+    ...borderColorStyle,
+    border: `1px solid`,
+    borderRadius: "0.5rem",
+    padding: "1rem",
+  };
+
+  return (
+    <div style={combinedStyle}>
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="text-xs font-semibold text-gray-600 mb-1">{title}</div>
+          <div className="text-3xl font-bold" style={textColorStyle}>{value}</div>
+          {subtitle && <div className="text-xs text-gray-500 mt-1">{subtitle}</div>}
+        </div>
+        <Icon className="h-6 w-6" style={textColorStyle} />
+      </div>
+    </div>
+  );
+};
+
 export default function AnalyticsTab({
   accuracyByClass = [],
   avgConfByItem = [],
@@ -35,6 +80,55 @@ export default function AnalyticsTab({
   decisionDuration = [],
   histogram = [],
 }) {
+  const [trends, setTrends] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Fetch real-time trends data
+  useEffect(() => {
+    const fetchTrends = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(`${API_BASE}/ai_dashboard/processing-trends/`);
+        if (res.ok) {
+          const data = await res.json();
+          setTrends(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error("Error fetching trends:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTrends();
+  }, []);
+
+  // Calculate insights
+  const insights = useMemo(() => {
+    const total = (accuracyByClass || []).reduce((s, c) => s + (c.total || 0), 0) || 0;
+    const accepted = (accuracyByClass || []).reduce((s, c) => s + (c.accepted || 0), 0) || 0;
+    const rejected = (accuracyByClass || []).reduce((s, c) => s + (c.rejected || 0), 0) || 0;
+    const flagged = (flagFrequency || []).reduce((s, c) => s + (c.count || 0), 0) || 0;
+    const avgConf = (avgConfByItem || []).length > 0
+      ? (avgConfByItem.reduce((s, c) => s + (c.avg_conf ?? c.avg_confidence ?? 0), 0) / avgConfByItem.length * 100).toFixed(1)
+      : 0;
+    const topBrand = (brandsSummary || []).sort((a, b) => b.total - a.total)[0];
+    const topModel = (modelCompare || []).sort((a, b) => b.count - a.count)[0];
+    const accuracy = total > 0 ? ((accepted / total) * 100).toFixed(1) : 0;
+
+    return {
+      total,
+      accepted,
+      rejected,
+      flagged,
+      avgConf,
+      topBrand,
+      topModel,
+      accuracy,
+    };
+  }, [accuracyByClass, avgConfByItem, flagFrequency, brandsSummary, modelCompare]);
   
   // -------- EXPORT BUTTON LOGIC ----------
   const exportBrands = () => {
@@ -60,18 +154,90 @@ export default function AnalyticsTab({
     URL.revokeObjectURL(url);
   };
 
+  if (error) {
+    return (
+      <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
+        <div className="text-red-800 font-semibold mb-2">Error Loading Analytics</div>
+        <div className="text-red-700 text-sm">{error}</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Key Metrics Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          icon={CheckCircle}
+          title="Overall Accuracy"
+          value={`${insights.accuracy}%`}
+          subtitle={`${insights.accepted} accepted`}
+          color="green"
+        />
+        <StatCard
+          icon={AlertCircle}
+          title="Flagged Items"
+          value={insights.flagged}
+          subtitle={`${((insights.flagged / insights.total) * 100).toFixed(1)}% of total`}
+          color={insights.flagged > 100 ? "red" : "green"}
+        />
+        <StatCard
+          icon={TrendingUp}
+          title="Avg Confidence"
+          value={`${insights.avgConf}%`}
+          subtitle="Model confidence level"
+          color="green"
+        />
+        <StatCard
+          icon={Clock}
+          title="Total Processed"
+          value={insights.total.toLocaleString()}
+          subtitle={`${insights.accepted} ✓ ${insights.rejected} ✗`}
+          color="blue"
+        />
+      </div>
+
+      {/* Processing Trends */}
+      {trends.length > 0 && (
+        <Card title="Processing Trends" subtitle="Items processed over time">
+          <div style={{ height: 280 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={trends} margin={{ top: 10, right: 20, left: 0, bottom: 30 }}>
+                <defs>
+                  <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={COLORS.PRIMARY} stopOpacity={0.8} />
+                    <stop offset="95%" stopColor={COLORS.PRIMARY} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={COLORS.TINT_20} />
+                <XAxis dataKey="timestamp" stroke="#2d2d2d" tick={{ fontSize: 12 }} />
+                <YAxis stroke="#2d2d2d" tick={{ fontSize: 12 }} />
+                <Tooltip 
+                  contentStyle={{ background: "#fff", border: "1px solid #ccc", borderRadius: "4px" }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="count"
+                  stroke={COLORS.PRIMARY}
+                  fillOpacity={1}
+                  fill="url(#colorCount)"
+                  name="Items Processed"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      )}
 
       {/* Top row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="Classification Distribution" subtitle="Breakdown by class">
+        <Card title="Classification Distribution" subtitle="Accepted vs Rejected by item class">
           <div style={{ height: 320 }}>
             <AccuracyByClassChart data={accuracyByClass} />
           </div>
         </Card>
 
-        <Card title="Avg Confidence by Item" subtitle="Model confidence per item">
+        <Card title="Model Confidence by Item" subtitle="Average confidence score per item">
           <div style={{ height: 320 }}>
             <AvgConfidenceByItemChart data={avgConfByItem} />
           </div>
@@ -82,12 +248,13 @@ export default function AnalyticsTab({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <Card
-            title="Brand Summary"
-            subtitle="Top detected brands (last seen)"
+            title="Brand Distribution"
+            subtitle={`Top ${Math.min(8, brandsSummary.length)} detected brands`}
             actions={
               <button
                 onClick={exportBrands}
-                className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                className="px-3 py-1 text-xs text-white rounded transition"
+                style={{ backgroundColor: COLORS.PRIMARY }}
               >
                 Export CSV
               </button>
@@ -107,23 +274,24 @@ export default function AnalyticsTab({
                 className="overflow-y-auto pr-2"
               >
                 <div className="space-y-3">
-                  {(brandsSummary || []).map((b, i) => (
+                  {(brandsSummary || []).slice(0, 10).map((b, i) => (
                     <div
                       key={b.brand + i}
-                      className="flex items-center justify-between bg-white border rounded p-3"
+                      className="flex items-center justify-between border rounded p-3 hover:shadow-sm transition"
+                      style={{ background: `linear-gradient(to right, ${COLORS.TINT_10}, white)` }}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded bg-green-50 flex items-center justify-center text-green-700 font-semibold">
-                          {String(b.brand).charAt(0).toUpperCase()}
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: COLORS.PRIMARY }}>
+                          {i + 1}
                         </div>
                         <div>
-                          <div className="text-sm font-medium">{b.brand}</div>
-                          <div className="text-xs text-gray-400">
-                            last seen: {new Date(b.last_seen).toLocaleString()}
+                          <div className="text-sm font-semibold text-gray-900">{b.brand}</div>
+                          <div className="text-xs text-gray-500">
+                            last: {b.last_seen ? new Date(b.last_seen).toLocaleDateString() : "N/A"}
                           </div>
                         </div>
                       </div>
-                      <div className="text-lg font-semibold text-gray-800">{b.total}</div>
+                      <Badge className="font-bold" style={{ backgroundColor: COLORS.TINT_10, color: COLORS.PRIMARY }}>{b.total}</Badge>
                     </div>
                   ))}
                 </div>
@@ -132,54 +300,83 @@ export default function AnalyticsTab({
           </Card>
         </div>
 
-        {/* Flag Frequency */}
+        {/* Flag Analysis */}
         <div>
-          <Card title="Flag Frequency" subtitle="Top flags">
-            <div style={{ height: 320 }}>
+          <Card title="Flag Analysis" subtitle="Top flagged issues">
+            <div style={{ height: 360 }}>
               <FlagFrequencyChart data={flagFrequency} />
             </div>
           </Card>
         </div>
       </div>
 
-      {/* Bottom row AFTER REMOVING the old Top Brands list */}
+      {/* Model Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div>
-          <Card title="Model Compare">
-            <div style={{ height: 280 }}>
-              <ModelCompareChart data={modelCompare} />
-            </div>
-          </Card>
-        </div>
-
-        <div>
-          <Card title="Accuracy by Class (compact)">
-          <div style={{ height: 260 }}>
-            <AccuracyByClassChart data={accuracyByClass} />
+        <Card title="Model Usage" subtitle="Predictions by model version">
+          <div style={{ height: 280 }}>
+            <ModelCompareChart data={modelCompare} />
           </div>
         </Card>
 
-          {/* <Card title="Confidence Score Distribution">
-            <div style={{ height: 280 }}>
-              <AvgConfidenceHistogram data={histogram} />
+        <Card title="Confidence Distribution" subtitle="Bucketed by confidence ranges">
+          <div style={{ height: 280 }}>
+            <AvgConfidenceHistogram data={histogram} />
+          </div>
+        </Card>
+      </div>
+
+      {/* Insights Summary */}
+      <Card title="Key Insights" subtitle="Performance summary and recommendations">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="font-semibold text-blue-900 mb-2">📊 Processing Volume</div>
+            <div className="text-sm text-blue-800">
+              Total items processed: <strong>{insights.total.toLocaleString()}</strong>
+              {insights.total > 0 && (
+                <>
+                  <br />
+                  Acceptance rate: <strong>{insights.accuracy}%</strong>
+                </>
+              )}
             </div>
-          </Card> */}
+          </div>
+
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="font-semibold text-green-900 mb-2">✓ Top Performer</div>
+            <div className="text-sm text-green-800">
+              Brand: <strong>{insights.topBrand?.brand || "N/A"}</strong>
+              {insights.topBrand && (
+                <>
+                  <br />
+                  Detections: <strong>{insights.topBrand.total}</strong>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <div className="font-semibold text-purple-900 mb-2">🤖 Model Status</div>
+            <div className="text-sm text-purple-800">
+              Most used: <strong>{insights.topModel?.model_used || "N/A"}</strong>
+              {insights.topModel && (
+                <>
+                  <br />
+                  Predictions: <strong>{insights.topModel.count}</strong>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="font-semibold text-orange-900 mb-2">⚠️ Quality Metrics</div>
+            <div className="text-sm text-orange-800">
+              Avg confidence: <strong>{insights.avgConf}%</strong>
+              <br />
+              Flagged rate: <strong>{((insights.flagged / insights.total) * 100 || 0).toFixed(2)}%</strong>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* <Card title="Decision Duration by Item">
-          <div style={{ height: 260 }}>
-            <DecisionDurationChart data={decisionDuration} />
-          </div>
-        </Card> */}
-
-        {/* <Card title="Accuracy by Class (compact)">
-          <div style={{ height: 260 }}>
-            <AccuracyByClassChart data={accuracyByClass} />
-          </div>
-        </Card> */}
-      </div>
+      </Card>
     </div>
   );
 }

@@ -1,5 +1,4 @@
-// MachineCharts.jsx
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -12,61 +11,14 @@ import {
 } from "recharts";
 
 // -----------------------------------------------------
-//  Universal Backend URL (Vercel/Railway-safe)
+// MACHINE PERFORMANCE CHART
 // -----------------------------------------------------
-const API_BASE = import.meta.env.VITE_API_URL;
-
-// -----------------------------------------------------
-//  Universal API hook with debug
-// -----------------------------------------------------
-const useApi = (path) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const ac = new AbortController();
-    const url = path.startsWith("http") ? path : `${API_BASE}${path}`;
-
-    fetch(url, { signal: ac.signal })
-      .then(async (res) => {
-        if (!res.ok) {
-          const text = await res.text(); // log raw response for debugging
-          console.warn(`API call failed: ${url}`, text);
-          throw new Error(`${res.status} ${res.statusText}`);
-        }
-        return res.json();
-      })
-      .then((json) => setData(json))
-      .catch((err) => {
-        if (err.name !== "AbortError") setError(err);
-      })
-      .finally(() => setLoading(false));
-
-    return () => ac.abort();
-  }, [path]);
-
-  return { data, loading, error };
-};
-
-// -----------------------------------------------------
-//  MACHINE PERFORMANCE CHART
-// -----------------------------------------------------
-export const MachinesPerformanceChart = () => {
-  //  Use the correct deployed path
-  const { data, loading, error } = useApi("/ai_dashboard/machines/");
-
-  const results = data || [];
-
-  const chartData = results.map((m) => ({
-    machine: m.machine_name || m.name || "Unknown Machine",
-    accepted: m.accepted ?? 0,
-    rejected: m.rejected ?? 0,
-    total: m.total ?? ((m.accepted ?? 0) + (m.rejected ?? 0))
+export const MachinesPerformanceChart = ({ data = [] }) => {
+  const chartData = data.map((m) => ({
+    machine: m.name,
+    total_collected: m.total_collected ?? 0,
   }));
 
-  if (loading) return <div className="p-4">Loading machine performance…</div>;
-  if (error) return <div className="p-4 text-red-500">Error: {error.message}</div>;
   if (!chartData.length) return <div className="p-4 text-gray-500">No machine data</div>;
 
   return (
@@ -77,47 +29,81 @@ export const MachinesPerformanceChart = () => {
         <YAxis />
         <Tooltip />
         <Legend />
-        <Bar dataKey="total" fill="#3B82F6" name="Total" />
-        <Bar dataKey="accepted" fill="#16A34A" name="Accepted" />
-        <Bar dataKey="rejected" fill="#EF4444" name="Rejected" />
+        <Bar dataKey="total_collected" fill="#3B82F6" name="Total Collected" />
       </BarChart>
     </ResponsiveContainer>
   );
 };
 
 // -----------------------------------------------------
-//  MACHINE STATUS LIST
+// MACHINE STATUS LIST / TABLE
 // -----------------------------------------------------
-export const MachinesStatusList = () => {
-  const { data, loading, error } = useApi("/ai_dashboard/machines/");
-  const results = data || [];
-
-  if (loading) return <div className="p-4">Loading machines…</div>;
-  if (error) return <div className="p-4 text-red-500">Error: {error.message}</div>;
-  if (!results.length) return <div className="p-4 text-gray-500">No machines available</div>;
+export const MachinesStatusList = ({ data = [] }) => {
+  if (!data.length) return <div className="p-4 text-gray-500">No machines available</div>;
 
   return (
-    <div className="space-y-2">
-      {results.map((m) => (
-        <div
-          key={m.id || m.machine_name || m.name}
-          className="p-2 border rounded flex items-center justify-between hover:bg-gray-50"
-        >
-          <div>
-            <div className="font-medium">{m.machine_name || m.name || "Unknown Machine"}</div>
-            <div className="text-xs text-gray-500">
-              Last seen: {m.last_seen || "No data"}
-            </div>
-          </div>
-          <div className="flex items-center">
-            <span
-              className={`w-2 h-2 rounded-full mr-2 ${
-                m.online ? "bg-green-500" : "bg-red-500"
-              }`}
-            />
-          </div>
-        </div>
-      ))}
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm border-collapse border border-gray-200">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="p-2 border">Machine</th>
+            <th className="p-2 border">Status</th>
+            <th className="p-2 border">Cans Capacity</th>
+            <th className="p-2 border">Bottles Capacity</th>
+            <th className="p-2 border">Total Collected</th>
+            <th className="p-2 border">Daily Average</th>
+            <th className="p-2 border">Efficiency</th>
+            <th className="p-2 border">Location</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((m, i) => (
+            <tr key={i} className="text-center hover:bg-gray-50">
+              <td className="p-2 border">{m.name}</td>
+              <td className={`p-2 border font-semibold ${m.status === "available" ? "text-green-600" : "text-red-600"}`}>{m.status}</td>
+              <td className="p-2 border">{m.cans_capacity}</td>
+              <td className="p-2 border">{m.bottles_capacity}</td>
+              <td className="p-2 border">{m.total_collected}</td>
+              <td className="p-2 border">{m.daily_average}</td>
+              <td className="p-2 border">{m.efficiency}</td>
+              <td className="p-2 border">
+                <a href={m.location_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">View Map</a>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+// -----------------------------------------------------
+// KPIs
+// -----------------------------------------------------
+export const MachinesKPIs = ({ data = [] }) => {
+  const totalMachines = data.length;
+  const availableMachines = data.filter(m => m.status === "available").length;
+  const totalCollected = data.reduce((sum, m) => sum + (m.total_collected ?? 0), 0);
+  const avgEfficiency = data.length ? (data.reduce((sum, m) => sum + parseFloat(m.efficiency) || 0, 0) / data.length).toFixed(1) + "%" : "0%";
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+      <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
+        <div className="text-gray-500 text-sm">Total Machines</div>
+        <div className="text-xl font-semibold">{totalMachines}</div>
+      </div>
+      <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
+        <div className="text-gray-500 text-sm">Available</div>
+        <div className="text-xl font-semibold text-green-600">{availableMachines}</div>
+      </div>
+      <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
+        <div className="text-gray-500 text-sm">Total Collected</div>
+        <div className="text-xl font-semibold text-blue-600">{totalCollected}</div>
+      </div>
+      <div className="p-4 bg-white rounded-lg border shadow-sm text-center">
+        <div className="text-gray-500 text-sm">Average Efficiency</div>
+        <div className="text-xl font-semibold text-purple-600">{avgEfficiency}</div>
+      </div>
     </div>
   );
 };
