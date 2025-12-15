@@ -10,6 +10,7 @@ import {
   Tooltip,
   BarChart,
   Bar,
+  Cell,
 } from "recharts";
 import { COLORS } from "@/constants/colors";
 
@@ -291,28 +292,12 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
     return "#ef4444"; // red
   };
 
-  const CustomBar = (props) => {
-    const { fill, x, y, width, height, payload } = props;
-    return (
-      <g>
-        <rect
-          x={x}
-          y={y}
-          width={width}
-          height={height}
-          fill={getConfidenceColor(payload.avg_confidence)}
-          rx={4}
-        />
-      </g>
-    );
-  };
-
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-          <p className="text-sm font-semibold text-gray-900">{data.model}</p>
+          <p className="text-sm font-semibold text-gray-900">{data.model_used}</p>
           <p className="text-xs text-purple-600">Confidence: {data.avg_confidence.toFixed(1)}%</p>
           <p className="text-xs text-gray-600">Predictions: {data.count.toLocaleString()}</p>
           {data.accuracy > 0 && <p className="text-xs text-blue-600">Accuracy: {data.accuracy.toFixed(1)}%</p>}
@@ -344,7 +329,7 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
           <XAxis 
-            dataKey="model" 
+            dataKey="model_used" 
             stroke="#9ca3af"
             angle={-45}
             textAnchor="end"
@@ -360,11 +345,14 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
           <Tooltip content={<CustomTooltip />} />
           <Bar 
             dataKey="avg_confidence" 
-            shape={<CustomBar />}
             name="Avg Confidence (%)"
             isAnimationActive={true}
             radius={[8, 8, 0, 0]}
-          />
+          >
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={getConfidenceColor(entry.avg_confidence)} />
+            ))}
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
 
