@@ -234,12 +234,17 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
   // Use provided model data or fallback to API
   const models = modelData || data?.models || [];
   const chartData = models
-    .map((m) => ({
-      model: m.model_used || "Unknown",
-      avg_confidence: +(m.avg_confidence || 0) * 100,
-      count: m.count || 0,
-      accuracy: +(m.accuracy || 0) * 100,
-    }))
+    .map((m) => {
+      // Check if avg_confidence is already a percentage (0-100) or a decimal (0-1)
+      const conf = +(m.avg_confidence || 0);
+      const confidenceValue = conf > 1 ? conf : conf * 100;
+      return {
+        model_used: m.model_used || "Unknown",
+        avg_confidence: confidenceValue,
+        count: m.count || 0,
+        accuracy: +(m.accuracy || 0) > 1 ? +(m.accuracy || 0) : +(m.accuracy || 0) * 100,
+      };
+    })
     .sort((a, b) => b.avg_confidence - a.avg_confidence);
 
   const loading = modelData ? false : apiLoading;
