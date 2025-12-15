@@ -31,7 +31,7 @@ export const useApi = (endpoint) => {
 
     const fetchData = async () => {
       const ac = new AbortController();
-      const timeout = setTimeout(() => ac.abort(), 6000); // 6 second timeout
+      const timeout = setTimeout(() => ac.abort(), 15000); // 15 second timeout
 
       try {
         if (!isMounted) return;

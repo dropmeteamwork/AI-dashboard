@@ -11,6 +11,7 @@ const AdminTab = () => {
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [showDialog, setShowDialog] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
@@ -18,10 +19,17 @@ const AdminTab = () => {
     email: "",
     password: "",
     phone_number: "",
+    type: "Admin",
+    is_active: true,
   });
   const [submitting, setSubmitting] = useState(false);
 
   const API_BASE = "https://web-ai-dashboard.up.railway.app";
+
+  const USER_TYPES = [
+    { value: "Admin", label: "Administrator - Full access to all endpoints" },
+    { value: "Machine owner", label: "Machine Owner - Access to machine and overview endpoints" },
+  ];
 
   // Fetch admins
   useEffect(() => {

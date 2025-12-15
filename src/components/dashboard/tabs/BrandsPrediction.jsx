@@ -21,20 +21,36 @@ export default function BrandsPrediction() {
 
   const itemsPerPage = 12;
 
-  // Fetch brand predictions
+  // Fetch brand predictions with authentication
   useEffect(() => {
     const fetchBrands = async () => {
       try {
-        const response = await fetch(`${API_BASE}/ai_dashboard/brand-predictions/`);
+        const token = localStorage.getItem("access_token");
+        const response = await fetch(`${API_BASE}/ai_dashboard/brand-predictions/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        
+        if (!response.ok) {
+          console.error("API error:", response.status);
+          setBrandPredictions([]);
+          setLoading(false);
+          return;
+        }
+        
         const data = await response.json();
 
         if (Array.isArray(data)) {
           setBrandPredictions(data);
         } else if (data.results) {
           setBrandPredictions(data.results);
+        } else {
+          setBrandPredictions([]);
         }
       } catch (error) {
         console.error("Error fetching brand predictions:", error);
+        setBrandPredictions([]);
       } finally {
         setLoading(false);
       }
@@ -89,6 +105,18 @@ export default function BrandsPrediction() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: COLORS.PRIMARY }} />
+      </div>
+    );
+  }
+
+  if (brandPredictions.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 text-center">
+        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+          <Search className="w-8 h-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-700">No Brand Predictions Found</h3>
+        <p className="text-gray-500 mt-2">There are no brand predictions available at this time.</p>
       </div>
     );
   }

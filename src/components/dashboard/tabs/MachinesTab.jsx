@@ -20,7 +20,7 @@ const MachinesTab = () => {
       const attemptFetch = async () => {
         try {
           const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+          const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
           const res = await fetch(`${API_BASE}/ai_dashboard/machines/`, {
             signal: controller.signal,

@@ -45,47 +45,37 @@ const PredictionsTab = () => {
     const fetchPredictions = async () => {
       setLoading(true);
       setError(null);
-      let retries = 0;
-      const maxRetries = 1;
 
-      const attemptFetch = async () => {
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
 
-          const res = await fetch(`${API_BASE}/ai_dashboard/predictions/?limit=500`, {
-            signal: controller.signal,
-          });
+        const res = await fetch(`${API_BASE}/ai_dashboard/predictions/?limit=100`, {
+          signal: controller.signal,
+        });
 
-          clearTimeout(timeout);
+        clearTimeout(timeout);
 
-          if (res.status === 404) {
-            console.warn("Predictions endpoint not available");
-            setPredictions([]);
-            return;
-          }
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const data = await res.json();
-          setPredictions(Array.isArray(data) ? data : data.results || []);
-        } catch (err) {
-          if (err.name === "AbortError") {
-            console.warn("Predictions fetch timeout");
-            if (retries < maxRetries) {
-              retries++;
-              console.log(`Retrying predictions fetch (${retries}/${maxRetries})...`);
-              return attemptFetch();
-            }
-            console.error("Request timeout after retries");
-          } else {
-            console.error("Failed to fetch predictions:", err);
-          }
-          // Don't show error state, just load empty predictions
+        if (res.status === 404) {
+          console.warn("Predictions endpoint not available");
           setPredictions([]);
+          setLoading(false);
+          return;
         }
-      };
-
-      await attemptFetch();
-      setLoading(false);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setPredictions(Array.isArray(data) ? data : data.results || []);
+      } catch (err) {
+        if (err.name === "AbortError") {
+          console.warn("Predictions fetch timeout");
+        } else {
+          console.error("Failed to fetch predictions:", err);
+        }
+        // Don't show error state, just load empty predictions
+        setPredictions([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchPredictions();
