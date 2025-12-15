@@ -10,7 +10,6 @@ import {
   Tooltip,
   BarChart,
   Bar,
-  Cell,
 } from "recharts";
 import { COLORS } from "@/constants/colors";
 
@@ -345,14 +344,11 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
           <Tooltip content={<CustomTooltip />} />
           <Bar 
             dataKey="avg_confidence" 
+            fill="#8B5CF6"
             name="Avg Confidence (%)"
             isAnimationActive={true}
             radius={[8, 8, 0, 0]}
-          >
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={getConfidenceColor(entry.avg_confidence)} />
-            ))}
-          </Bar>
+          />
         </BarChart>
       </ResponsiveContainer>
 
