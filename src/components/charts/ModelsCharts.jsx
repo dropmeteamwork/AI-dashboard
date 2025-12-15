@@ -17,7 +17,7 @@ import { COLORS } from "@/constants/colors";
 const BASE_URL = "https://web-ai-dashboard.up.railway.app";
 
 // -------------------------
-// API Hook
+// API Hook - Simple version
 // -------------------------
 export const useApi = (endpoint) => {
   const [data, setData] = useState(null);
@@ -26,31 +26,14 @@ export const useApi = (endpoint) => {
 
   useEffect(() => {
     let isMounted = true;
-    let retries = 0;
-    const maxRetries = 2;
 
     const fetchData = async () => {
-      const ac = new AbortController();
-      const timeout = setTimeout(() => ac.abort(), 15000); // 15 second timeout
-
       try {
-        if (!isMounted) return;
         setLoading(true);
         const url = `${BASE_URL}${endpoint}`;
-
-        const response = await fetch(url, { signal: ac.signal });
-        clearTimeout(timeout);
+        const response = await fetch(url);
 
         if (!response.ok) {
-          // If 404, don't retry - endpoint doesn't exist
-          if (response.status === 404) {
-            if (isMounted) {
-              setData(null);
-              setLoading(false);
-              setError(null);
-            }
-            return;
-          }
           throw new Error(`HTTP ${response.status}`);
         }
 
@@ -61,29 +44,9 @@ export const useApi = (endpoint) => {
           setLoading(false);
         }
       } catch (err) {
-        clearTimeout(timeout);
-        
-        if (err.name === "AbortError") {
-          // Timeout - retry if we haven't exhausted retries
-          if (retries < maxRetries) {
-            retries++;
-            console.log(`API timeout, retrying ${endpoint} (${retries}/${maxRetries})...`);
-            // Wait before retrying to avoid hammering the server
-            setTimeout(() => {
-              if (isMounted) {
-                fetchData();
-              }
-            }, 1000);
-            return;
-          }
-          if (isMounted) {
-            setError(new Error("Request timeout after retries"));
-            setData(null);
-            setLoading(false);
-          }
-        } else if (isMounted) {
+        console.error(`API error for ${endpoint}:`, err);
+        if (isMounted) {
           setError(err);
-          setData(null);
           setLoading(false);
         }
       }
@@ -129,12 +92,13 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <p className="text-sm text-red-600">Error loading data: {error?.message}</p>
+          <p className="text-xs text-gray-500 mt-2">Please refresh the page</p>
         </div>
       </div>
     );
   }
 
-  if (loading || !chartData.length) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center space-y-4">
@@ -142,6 +106,18 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
             <div className="h-8 bg-gray-200 rounded w-32 mx-auto"></div>
             <div className="h-64 bg-gray-100 rounded"></div>
           </div>
+          <p className="text-sm text-gray-500">Loading performance data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!chartData.length) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <p className="text-sm text-gray-600">No performance data available</p>
+          <p className="text-xs text-gray-500 mt-1">Data will appear after predictions are made</p>
         </div>
       </div>
     );

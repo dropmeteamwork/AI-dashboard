@@ -18,6 +18,7 @@ import {
 const API_BASE = "https://web-ai-dashboard.up.railway.app";
 
 const PredictionsTab = () => {
+  const [allPredictions, setAllPredictions] = useState([]); // Cache all data
   const [predictions, setPredictions] = useState([]);
   const [seenPredictions, setSeenPredictions] = useState(new Set());
   const [loading, setLoading] = useState(true);
@@ -31,7 +32,9 @@ const PredictionsTab = () => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const [totalCount, setTotalCount] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const pageSize = 20;
 
   // Flag states
   const [flaggedItems, setFlaggedItems] = useState(new Set());
@@ -40,39 +43,44 @@ const PredictionsTab = () => {
   const [selectedEdgeCase, setSelectedEdgeCase] = useState(new Set());
   const [comments, setComments] = useState({});
 
-  // Fetch predictions
+  // Fetch all predictions once on mount
   useEffect(() => {
     const fetchPredictions = async () => {
       setLoading(true);
       setError(null);
 
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        const res = await fetch(`${API_BASE}/ai_dashboard/predictions/`);
 
-        const res = await fetch(`${API_BASE}/ai_dashboard/predictions/?limit=100`, {
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeout);
-
-        if (res.status === 404) {
-          console.warn("Predictions endpoint not available");
-          setPredictions([]);
-          setLoading(false);
-          return;
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
         }
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        
         const data = await res.json();
-        setPredictions(Array.isArray(data) ? data : data.results || []);
-      } catch (err) {
-        if (err.name === "AbortError") {
-          console.warn("Predictions fetch timeout");
-        } else {
-          console.error("Failed to fetch predictions:", err);
+        
+        // Handle paginated response format (Django REST Framework style)
+        if (data.results && typeof data.count === 'number') {
+          // Server returned paginated data
+          setAllPredictions(data.results);
+          setPredictions(data.results.slice(0, pageSize));
+          setTotalCount(data.count);
+          setTotalPages(Math.ceil(data.count / pageSize));
+        } else if (Array.isArray(data)) {
+          // Backend returned all data as array - use client-side pagination
+          // Limit to 500 items for better performance
+          const limitedData = data.slice(0, 500);
+          setAllPredictions(limitedData);
+          setPredictions(limitedData.slice(0, pageSize));
+          setTotalCount(limitedData.length);
+          setTotalPages(Math.ceil(limitedData.length / pageSize));
         }
-        // Don't show error state, just load empty predictions
+      } catch (err) {
+        console.error("Failed to fetch predictions:", err);
+        setError(err.message);
+        setAllPredictions([]);
         setPredictions([]);
+        setTotalCount(0);
+        setTotalPages(1);
       } finally {
         setLoading(false);
       }
@@ -81,6 +89,15 @@ const PredictionsTab = () => {
     fetchPredictions();
   }, []);
 
+  // Paginate the cached data when page changes
+  useEffect(() => {
+    if (allPredictions.length > 0) {
+      const startIndex = (currentPage - 1) * pageSize;
+      const paginatedData = allPredictions.slice(startIndex, startIndex + pageSize);
+      setPredictions(paginatedData);
+    }
+  }, [currentPage, allPredictions]);
+
   // Separate new and seen predictions
   const { newPredictions, oldPredictions } = useMemo(() => {
     const newPreds = predictions.filter((p) => !seenPredictions.has(p.id));
@@ -88,24 +105,24 @@ const PredictionsTab = () => {
     return { newPredictions: newPreds, oldPredictions: oldPreds };
   }, [predictions, seenPredictions]);
 
-  // Apply filters
+  // Apply client-side filters to current page data
   const filteredPredictions = useMemo(() => {
-    let filtered = [...newPredictions, ...oldPredictions];
+    let filtered = [...predictions];
 
     // Search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (p) =>
-          p.class?.toLowerCase().includes(term) ||
-          p.brand?.toLowerCase().includes(term) ||
+          p.item?.toLowerCase().includes(term) ||
+          p.machine_name?.toLowerCase().includes(term) ||
           p.id?.toString().includes(term)
       );
     }
 
     // Class filter
     if (classFilter !== "all") {
-      filtered = filtered.filter((p) => p.class === classFilter);
+      filtered = filtered.filter((p) => p.item === classFilter);
     }
 
     // Confidence filter
@@ -121,20 +138,7 @@ const PredictionsTab = () => {
     }
 
     return filtered;
-  }, [newPredictions, oldPredictions, searchTerm, classFilter, confidenceFilter]);
-
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredPredictions.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedPredictions = filteredPredictions.slice(
-    startIndex,
-    startIndex + itemsPerPage
-  );
-
-  // Reset to first page when filters change
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, classFilter, confidenceFilter]);
+  }, [predictions, searchTerm, classFilter, confidenceFilter]);
 
   // Mark as seen
   const markAsSeen = () => {
@@ -332,7 +336,7 @@ const PredictionsTab = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {paginatedPredictions.map((pred, idx) => (
+              {filteredPredictions.map((pred, idx) => (
                 <tr
                   key={pred.id}
                   className={`hover:bg-gray-50 transition ${
@@ -342,10 +346,10 @@ const PredictionsTab = () => {
                   <td className="px-6 py-4 text-gray-900 font-medium">{pred.id}</td>
                   <td className="px-6 py-4">
                     <Badge className="bg-purple-100 text-purple-800">
-                      {pred.class}
+                      {pred.item || pred.class || "—"}
                     </Badge>
                   </td>
-                  <td className="px-6 py-4 text-gray-700">{pred.brand || "—"}</td>
+                  <td className="px-6 py-4 text-gray-700">{pred.machine_name || pred.brand || "—"}</td>
                   <td className="px-6 py-4 text-right">
                     <span
                       className={`font-semibold ${
@@ -426,14 +430,12 @@ const PredictionsTab = () => {
         )}
 
         {/* Pagination Controls */}
-        {filteredPredictions.length > 0 && (
+        {totalCount > 0 && (
           <div className="p-6 border-t border-gray-100 flex items-center justify-between">
             <div className="text-sm text-gray-600">
-              Showing <span className="font-semibold">{startIndex + 1}</span> to{" "}
-              <span className="font-semibold">
-                {Math.min(startIndex + itemsPerPage, filteredPredictions.length)}
-              </span>{" "}
-              of <span className="font-semibold">{filteredPredictions.length}</span> predictions
+              Page <span className="font-semibold">{currentPage}</span> of{" "}
+              <span className="font-semibold">{totalPages}</span>{" "}
+              ({totalCount} total predictions)
             </div>
             <div className="flex gap-2">
               <Button

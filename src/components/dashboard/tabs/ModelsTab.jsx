@@ -12,13 +12,8 @@ const ModelsTab = () => {
   useEffect(() => {
     const fetchModelData = async () => {
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-        // Fetch analytics only - has model predictions_by_model data
-        const res = await fetch(`${BASE_URL}/ai_dashboard/analytics/`, { signal: controller.signal });
-
-        clearTimeout(timeout);
+        // Simple fetch without AbortController
+        const res = await fetch(`${BASE_URL}/ai_dashboard/analytics/`);
 
         if (res.ok) {
           const analyticsData = await res.json();
@@ -48,14 +43,11 @@ const ModelsTab = () => {
 
           setModelData(enrichedModels);
         } else {
+          console.warn("Analytics response not ok:", res.status);
           setModelData([]);
         }
       } catch (err) {
-        if (err.name === "AbortError") {
-          console.warn("Model data fetch timeout");
-        } else {
-          console.warn("Failed to fetch model data:", err);
-        }
+        console.warn("Failed to fetch model data:", err);
         setModelData([]);
       }
     };
