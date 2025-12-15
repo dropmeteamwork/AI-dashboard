@@ -29,6 +29,10 @@ const PredictionsTab = () => {
   const [classFilter, setClassFilter] = useState("all");
   const [confidenceFilter, setConfidenceFilter] = useState("all");
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   // Flag states
   const [flaggedItems, setFlaggedItems] = useState(new Set());
   const [flagTypeOpen, setFlagTypeOpen] = useState(new Set());
@@ -128,6 +132,19 @@ const PredictionsTab = () => {
 
     return filtered;
   }, [newPredictions, oldPredictions, searchTerm, classFilter, confidenceFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredPredictions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedPredictions = filteredPredictions.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  );
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, classFilter, confidenceFilter]);
 
   // Mark as seen
   const markAsSeen = () => {
@@ -325,7 +342,7 @@ const PredictionsTab = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredPredictions.map((pred, idx) => (
+              {paginatedPredictions.map((pred, idx) => (
                 <tr
                   key={pred.id}
                   className={`hover:bg-gray-50 transition ${
@@ -415,6 +432,63 @@ const PredictionsTab = () => {
                 ? "No predictions match your filters"
                 : "Predictions will appear here once they are generated"}
             </p>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {filteredPredictions.length > 0 && (
+          <div className="p-6 border-t border-gray-100 flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Showing <span className="font-semibold">{startIndex + 1}</span> to{" "}
+              <span className="font-semibold">
+                {Math.min(startIndex + itemsPerPage, filteredPredictions.length)}
+              </span>{" "}
+              of <span className="font-semibold">{filteredPredictions.length}</span> predictions
+            </div>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Previous
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-3 py-2 rounded-lg ${
+                        currentPage === pageNum
+                          ? "bg-blue-600 text-white"
+                          : "border border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+              <Button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next
+              </Button>
+            </div>
           </div>
         )}
       </Card>
