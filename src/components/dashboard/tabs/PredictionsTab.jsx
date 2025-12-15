@@ -196,6 +196,14 @@ const PredictionsTab = () => {
         <p className="text-gray-600">Browse, filter, and manage all predictions with flagging and commenting options</p>
       </div>
 
+      {/* Loading indicator - doesn't block UI */}
+      {loading && predictions.length === 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
+          <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+          <p className="text-sm text-blue-700">Loading predictions...</p>
+        </div>
+      )}
+
       {/* New Predictions Alert */}
       {newPredictions.length > 0 && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">

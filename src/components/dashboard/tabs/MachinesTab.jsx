@@ -56,31 +56,26 @@ const MachinesTab = () => {
     fetchMachines();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-green-600" />
-          <p className="text-gray-600">Loading machine data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-2" />
-          <p className="text-gray-900 font-semibold">Failed to load machines</p>
-          <p className="text-sm text-gray-600">{error.message}</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full">
+      {/* Loading/Error Indicators */}
+      {loading && machines.length === 0 && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-center gap-3">
+          <Loader2 className="h-4 w-4 animate-spin text-green-600" />
+          <p className="text-sm text-green-700">Loading machine data...</p>
+        </div>
+      )}
+
+      {error && machines.length === 0 && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center gap-3">
+          <AlertCircle className="h-5 w-5 text-red-600" />
+          <div>
+            <p className="text-sm font-semibold text-red-900">Failed to load machines</p>
+            <p className="text-xs text-red-700">{error.message}</p>
+          </div>
+        </div>
+      )}
+
       {/* Header Section */}
       <div className="mb-8 pb-6 border-b border-gray-200">
         <div className="flex items-center gap-3 mb-3">
