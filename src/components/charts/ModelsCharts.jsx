@@ -116,17 +116,6 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
     minConfidence: chartData.length > 0 ? Math.min(...chartData.map(d => d.avg_confidence)).toFixed(1) : 0,
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-2"></div>
-          <p className="text-sm text-gray-600">Loading performance data…</p>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -140,7 +129,11 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
   if (!chartData.length) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-gray-500 text-sm">No performance data available</p>
+        <div className="text-center">
+          <div className="animate-pulse space-y-3">
+            <div className="h-64 bg-gray-200 rounded"></div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -254,18 +247,7 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
 
   const topModel = chartData.length > 0 ? chartData[0] : null;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-purple-200 border-t-purple-600 rounded-full mx-auto mb-2"></div>
-          <p className="text-sm text-gray-600">Loading model data…</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
+  if (error && !chartData.length) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
@@ -278,7 +260,11 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
   if (!chartData.length) {
     return (
       <div className="flex items-center justify-center h-full">
-        <p className="text-gray-500 text-sm">No model data available</p>
+        <div className="text-center">
+          <div className="animate-pulse space-y-3">
+            <div className="h-64 bg-gray-200 rounded"></div>
+          </div>
+        </div>
       </div>
     );
   }
