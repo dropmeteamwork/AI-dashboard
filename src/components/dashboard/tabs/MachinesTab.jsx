@@ -14,12 +14,7 @@ const MachinesTab = () => {
     const fetchMachines = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem("access_token");
-        const res = await fetch(`${API_BASE}/dashboard/v2/metrics/machines/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await fetch(`${API_BASE}/ai_dashboard/machines/`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setMachines(data);
@@ -58,48 +53,50 @@ const MachinesTab = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 mb-2">
-          <Server className="h-6 w-6 text-blue-600" />
-          <h2 className="text-2xl font-bold text-gray-900">Machine Monitoring</h2>
+    <div className="w-full">
+      {/* Header Section */}
+      <div className="mb-8 pb-6 border-b border-gray-200">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="p-2 bg-blue-100 rounded-lg">
+            <Server className="h-6 w-6 text-blue-600" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900">Machine Monitoring</h2>
         </div>
-        <p className="text-gray-600">Track and monitor all connected machines and their performance</p>
+        <p className="text-gray-600 text-sm ml-11">Track and monitor all connected machines and their performance</p>
       </div>
 
-      {/* KPIs */}
+      {/* KPIs Section */}
       {machines.length > 0 && (
-        <div>
+        <div className="mb-8">
           <MachinesKPIs data={machines} />
         </div>
       )}
 
-      {/* Performance Chart */}
-      <Card className="p-6 border border-gray-200 hover:shadow-lg transition">
-        <div className="space-y-4">
-          <div>
-            <h3 className="font-semibold text-gray-900">Performance Overview</h3>
-            <p className="text-sm text-gray-600 mt-1">Machine performance metrics and trends</p>
-          </div>
-          <div style={{ height: 400 }} className="w-full">
+      {/* Performance Chart Section */}
+      <div className="mb-8 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+        <div className="p-6 border-b border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900">Performance Overview</h3>
+          <p className="text-sm text-gray-500 mt-1">Machine performance metrics and trends</p>
+        </div>
+        <div className="p-6">
+          <div style={{ minHeight: 600 }} className="w-full">
             <MachinesPerformanceChart data={machines} />
           </div>
         </div>
-      </Card>
+      </div>
 
-      {/* Status List */}
-      <Card className="p-6 border border-gray-200 hover:shadow-lg transition">
-        <div className="space-y-4">
-          <div>
-            <h3 className="font-semibold text-gray-900">Machine Status</h3>
-            <p className="text-sm text-gray-600 mt-1">Current status of all connected machines</p>
-          </div>
+      {/* Status List Section */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+        <div className="p-6 border-b border-gray-100">
+          <h3 className="text-lg font-semibold text-gray-900">Machine Status</h3>
+          <p className="text-sm text-gray-500 mt-1">Current status of all connected machines</p>
+        </div>
+        <div className="p-6">
           <div className="overflow-x-auto">
             <MachinesStatusList data={machines} />
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };
