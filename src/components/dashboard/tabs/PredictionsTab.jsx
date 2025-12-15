@@ -42,14 +42,14 @@ const PredictionsTab = () => {
       setLoading(true);
       setError(null);
       let retries = 0;
-      const maxRetries = 2;
+      const maxRetries = 1;
 
       const attemptFetch = async () => {
         try {
           const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          const timeout = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-          const res = await fetch(`${API_BASE}/ai_dashboard/predictions/`, {
+          const res = await fetch(`${API_BASE}/ai_dashboard/predictions/?limit=100`, {
             signal: controller.signal,
           });
 

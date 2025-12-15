@@ -31,7 +31,7 @@ export const useApi = (endpoint) => {
 
     const fetchData = async () => {
       const ac = new AbortController();
-      const timeout = setTimeout(() => ac.abort(), 8000); // 8 second timeout
+      const timeout = setTimeout(() => ac.abort(), 4000); // 4 second timeout
 
       try {
         setLoading(true);
@@ -313,7 +313,7 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
       {topModel && (
         <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
           <p className="text-xs text-gray-600 mb-1">Top Performing Model</p>
-          <p className="text-lg font-bold text-purple-700">{topModel.model}</p>
+          <p className="text-lg font-bold text-purple-700">{topModel.model_used}</p>
           <p className="text-sm text-gray-600 mt-2">
             Confidence: <span className="font-semibold text-purple-600">{topModel.avg_confidence.toFixed(1)}%</span> • 
             Predictions: <span className="font-semibold text-gray-700">{topModel.count.toLocaleString()}</span>
@@ -361,7 +361,7 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
               className="w-3 h-3 rounded"
               style={{ backgroundColor: getConfidenceColor(model.avg_confidence) }}
             ></div>
-            <span className="text-gray-700">{model.model}: {model.avg_confidence.toFixed(0)}%</span>
+            <span className="text-gray-700">{model.model_used}: {model.avg_confidence.toFixed(0)}%</span>
           </div>
         ))}
       </div>
