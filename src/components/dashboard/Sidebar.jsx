@@ -7,11 +7,11 @@ import { MachinesStatusList } from "@/components/charts/MachineCharts";
 const tabs = [
   { key: "overview", label: "Overview", icon: Activity },
   { key: "machines", label: "Machines", icon: Cpu },
+  { key: "predictions", label: "Predictions", icon: Flag },
   { key: "flags", label: "Flags", icon: Flag },
   { key: "models", label: "Models", icon: Box },
   { key: "analytics", label: "Analytics", icon: BarChart3 },
-  { key: "brands", label: "Brands", icon: Eye },
-  { key: "brand_predictions", label: "Brand Predictions", icon: Layers },
+  { key: "brands", label: "Brands Predictions", icon: Eye },
   { key: "report", label: "Report", icon: FileText },
   { key: "flagged_items", label: "Flagged Items", icon: AlertTriangle },
   { key: "admins", label: "Admins", icon: Users },

@@ -1,9 +1,40 @@
 // ModelsTab.jsx
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ModelPerformanceChart, ModelsConfidenceChart } from "@/components/charts/ModelsCharts";
 import { Brain } from "lucide-react";
 
+const BASE_URL = "https://web-ai-dashboard.up.railway.app";
+
 const ModelsTab = () => {
+  const [modelData, setModelData] = useState(null);
+
+  useEffect(() => {
+    const fetchModelData = async () => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+
+        const res = await fetch(`${BASE_URL}/ai_dashboard/analytics/`, {
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeout);
+
+        if (res.ok) {
+          const data = await res.json();
+          // Use predictions_by_model from analytics
+          setModelData(data.predictions_by_model || []);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch model data:", err);
+        setModelData([]);
+      }
+    };
+
+    fetchModelData();
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -38,7 +69,7 @@ const ModelsTab = () => {
               <p className="text-sm text-gray-600 mt-1">Model confidence levels</p>
             </div>
             <div style={{ height: 350 }} className="w-full">
-              <ModelsConfidenceChart />
+              <ModelsConfidenceChart modelData={modelData} />
             </div>
           </div>
         </Card>

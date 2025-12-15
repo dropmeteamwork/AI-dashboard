@@ -160,7 +160,17 @@ export const AvgConfidenceByItemChart = ({ data = [] }) => {
 /* Avg Confidence Histogram — enhanced area chart with risk levels            */
 /* -------------------------------------------------------------------------- */
 export const AvgConfidenceHistogram = ({ data = [] }) => {
-  if (!data?.length) return <div className="p-4 text-gray-500">No confidence data available</div>;
+  // Handle empty data with message
+  if (!data?.length) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-500">
+        <div className="text-center">
+          <p className="font-semibold">No confidence data available</p>
+          <p className="text-sm">Confidence distribution will appear here when data is processed</p>
+        </div>
+      </div>
+    );
+  }
 
   // Create 5 buckets: 0-19, 20-39, 40-59, 60-79, 80-100
   const buckets = [
@@ -172,7 +182,11 @@ export const AvgConfidenceHistogram = ({ data = [] }) => {
   ];
 
   data.forEach((d) => {
-    const conf = (d.avg_conf ?? d.avg_confidence ?? 0) * 100;
+    // Handle different confidence value formats
+    let conf = d.avg_conf ?? d.avg_confidence ?? d.confidence ?? 0;
+    // Convert to percentage if it's a decimal (0-1)
+    if (conf <= 1) conf = conf * 100;
+    
     let idx = 0;
     if (conf >= 80) idx = 4;
     else if (conf >= 60) idx = 3;

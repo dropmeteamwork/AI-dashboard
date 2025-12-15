@@ -4,6 +4,7 @@ import Header from "./HeaderResponsive";
 import Sidebar from "./Sidebar";
 import OverviewTab from "./tabs/OverviewTab";
 import MachinesTab from "./tabs/MachinesTab";
+import PredictionsTab from "./tabs/PredictionsTab";
 import ModelsTab from "./tabs/ModelsTab";
 import AnalyticsTab from "./tabs/AnalyticsTab";
 import FlagsTab from "./tabs/FlagsTab";
@@ -30,17 +31,32 @@ const Dashboard = () => {
 
   const refreshAll = () => setRefreshKey((k) => k + 1);
 
-  const fetchJson = async (endpoint) => {
-    const res = await fetch(`${BASE_URL}${endpoint}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+  const fetchJson = async (endpoint, timeout = 15000) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    try {
+      const res = await fetch(`${BASE_URL}${endpoint}`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    } catch (err) {
+      clearTimeout(timeoutId);
+      throw err;
+    }
   };
 
   useEffect(() => {
     const load = async () => {
       try {
-        const analyticsData = await fetchJson("/ai_dashboard/analytics/");
-        const machinesData = await fetchJson("/ai_dashboard/machines/");
+        const [analyticsData, machinesData] = await Promise.allSettled([
+          fetchJson("/ai_dashboard/analytics/"),
+          fetchJson("/ai_dashboard/machines/"),
+        ]).then((results) => [
+          results[0].status === "fulfilled" ? results[0].value : {},
+          results[1].status === "fulfilled" ? results[1].value : [],
+        ]);
 
         setAnalytics(analyticsData);
         setMachines(machinesData);
@@ -135,6 +151,7 @@ const Dashboard = () => {
             <OverviewTab overview={filteredOverview} topModel={topModel} />
           )}
           {activeTab === "machines" && <MachinesTab />}
+          {activeTab === "predictions" && <PredictionsTab />}
           {activeTab === "flags" && <FlagsTab flagFrequency={flagFrequency} />}
           {activeTab === "flagged_items" && <FlaggedItemsTab />}
 

@@ -16,6 +16,7 @@ import {
 
 const OverviewTab = ({ overview, topModel }) => {
   const [loading, setLoading] = useState(false);
+  const [machineFilter, setMachineFilter] = useState("all");
 
   // Use the overview data passed from Dashboard (already has correct analytics data)
   const stats = useMemo(() => {
@@ -27,6 +28,8 @@ const OverviewTab = ({ overview, topModel }) => {
       rejected: overview.rejected || 0,
       flagged: overview.flagged || 0,
       avgConfidence: overview.avg_confidence || 0,
+      avgDecisionDuration: overview.avg_decision_duration || 0,
+      edgeCases: overview.edge_cases || 0,
       acceptanceRate: overview.total > 0 
         ? ((overview.accepted / overview.total) * 100).toFixed(1)
         : 0,
@@ -86,18 +89,13 @@ const OverviewTab = ({ overview, topModel }) => {
         <div className="max-w-2xl">
           <h1 className="text-4xl font-bold mb-2">AI Dashboard</h1>
           <p className="mb-6 text-lg" style={{ color: "rgba(255,255,255,0.9)" }}>Real-time brand and product detection powered by machine learning</p>
-          <div className="flex gap-3 flex-wrap">
-            <Badge className="px-4 py-2 text-sm" style={{ backgroundColor: "white", color: "#6CC04A" }}>Machine Learning</Badge>
-            <Badge className="bg-white/20 text-white px-4 py-2 text-sm border border-white/30">Real-time Processing</Badge>
-            <Badge className="bg-white/20 text-white px-4 py-2 text-sm border border-white/30">Multi-Model Detection</Badge>
-          </div>
         </div>
       </div>
 
       {/* Key Metrics */}
       <div>
         <h2 className="text-2xl font-bold mb-4 text-gray-900">Key Metrics</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard
             icon={BarChart3}
             title="Total Items Processed"
@@ -120,18 +118,44 @@ const OverviewTab = ({ overview, topModel }) => {
             color="text-emerald-700"
           />
           <StatCard
-            icon={CheckCircle}
-            title="Active Machines"
-            value={overview?.active_machines || "—"}
-            subtitle="System status"
-            color="text-green-700"
+            icon={Clock}
+            title="Avg Decision Duration"
+            value={`${stats.avgDecisionDuration}ms`}
+            subtitle="Processing time"
+            color="text-purple-700"
           />
+          <StatCard
+            icon={AlertCircle}
+            title="Edge Cases"
+            value={stats.edgeCases.toLocaleString()}
+            subtitle="Total number"
+            color="text-red-700"
+          />
+        </div>
+      </div>
+
+      {/* Machine Filter */}
+      <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          <span className="font-semibold text-gray-900">Filter by Machine:</span>
+          <select 
+            value={machineFilter}
+            onChange={(e) => setMachineFilter(e.target.value)}
+            className="px-4 py-2 border border-blue-300 rounded-lg bg-white font-medium text-gray-900 hover:border-blue-500 transition"
+          >
+            <option value="all">All Machines</option>
+            <option value="maadi_club">Maadi Club</option>
+            {/* Add more machines as available */}
+          </select>
+          <span className="text-sm text-gray-600">Showing data across all machines</span>
         </div>
       </div>
 
       {/* Status Overview */}
       <div>
         <h2 className="text-2xl font-bold mb-4 text-gray-900">Prediction Status</h2>
+        
+        {/* Status Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="p-6" style={{ border: "1px solid rgba(108, 192, 74, 0.2)", backgroundColor: "rgba(108, 192, 74, 0.05)" }}>
             <div className="flex items-center gap-3 mb-3">
@@ -189,36 +213,7 @@ const OverviewTab = ({ overview, topModel }) => {
         </div>
       </div>
 
-      {/* Quick Start Guide */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Activity className="h-5 w-5 text-blue-600" />
-          Quick Start Guide
-        </h3>
-        <div className="space-y-3">
-          <div className="flex gap-3">
-            <Badge className="bg-blue-600 text-white min-w-fit px-3">1</Badge>
-            <div>
-              <p className="font-semibold text-gray-900">Explore Brand Predictions</p>
-              <p className="text-sm text-gray-600">View all detected brands and their confidence scores in real-time.</p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Badge className="bg-blue-600 text-white min-w-fit px-3">2</Badge>
-            <div>
-              <p className="font-semibold text-gray-900">Analyze Trends</p>
-              <p className="text-sm text-gray-600">Check analytics tab to see processing trends and key insights about your data.</p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Badge className="bg-blue-600 text-white min-w-fit px-3">3</Badge>
-            <div>
-              <p className="font-semibold text-gray-900">Review Flagged Items</p>
-              <p className="text-sm text-gray-600">Investigate items marked for review and adjust detection parameters as needed.</p>
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       {/* System Stats Footer */}
       <div className="border-t pt-6">

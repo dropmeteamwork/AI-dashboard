@@ -13,17 +13,44 @@ const MachinesTab = () => {
   useEffect(() => {
     const fetchMachines = async () => {
       setLoading(true);
-      try {
-        const res = await fetch(`${API_BASE}/ai_dashboard/machines/`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setMachines(data);
-      } catch (err) {
-        console.error("Failed to fetch machines:", err);
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
+      setError(null);
+      let retries = 0;
+      const maxRetries = 2;
+
+      const attemptFetch = async () => {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+          const res = await fetch(`${API_BASE}/ai_dashboard/machines/`, {
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeout);
+
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const data = await res.json();
+          setMachines(data);
+          setError(null);
+        } catch (err) {
+          if (err.name === "AbortError") {
+            console.warn("Machines fetch timeout");
+            if (retries < maxRetries) {
+              retries++;
+              console.log(`Retrying machines fetch (${retries}/${maxRetries})...`);
+              return attemptFetch();
+            }
+            setError(new Error("Request timeout - please try again"));
+          } else {
+            console.error("Failed to fetch machines:", err);
+            setError(err);
+          }
+          setMachines([]);
+        }
+      };
+
+      await attemptFetch();
+      setLoading(false);
     };
 
     fetchMachines();

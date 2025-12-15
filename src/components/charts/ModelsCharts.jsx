@@ -25,23 +25,67 @@ export const useApi = (endpoint) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const ac = new AbortController();
-    setLoading(true);
+    let isMounted = true;
+    let retries = 0;
+    const maxRetries = 2;
 
-    const url = `${BASE_URL}${endpoint}`;
+    const fetchData = async () => {
+      const ac = new AbortController();
+      const timeout = setTimeout(() => ac.abort(), 8000); // 8 second timeout
 
-    fetch(url, { signal: ac.signal })
-      .then((r) => {
-        if (!r.ok) throw new Error(`${r.status}`);
-        return r.json();
-      })
-      .then((j) => setData(j))
-      .catch((e) => {
-        if (e.name !== "AbortError") setError(e);
-      })
-      .finally(() => setLoading(false));
+      try {
+        setLoading(true);
+        const url = `${BASE_URL}${endpoint}`;
 
-    return () => ac.abort();
+        const response = await fetch(url, { signal: ac.signal });
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+          // If 404, don't retry - endpoint doesn't exist
+          if (response.status === 404) {
+            if (isMounted) {
+              setData(null);
+              setLoading(false);
+            }
+            return;
+          }
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const json = await response.json();
+        if (isMounted) {
+          setData(json);
+          setError(null);
+        }
+      } catch (err) {
+        if (err.name === "AbortError") {
+          // Timeout - retry if we haven't exhausted retries
+          if (retries < maxRetries) {
+            retries++;
+            console.log(`API timeout, retrying ${endpoint} (${retries}/${maxRetries})...`);
+            return fetchData();
+          }
+          if (isMounted) {
+            setError(new Error("Request timeout"));
+            setData(null);
+          }
+        } else if (isMounted) {
+          setError(err);
+          setData(null);
+        }
+      } finally {
+        clearTimeout(timeout);
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [endpoint]);
 
   return { data, loading, error };
@@ -191,10 +235,11 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
 // -------------------------
 // Models Confidence Chart
 // -------------------------
-export const ModelsConfidenceChart = () => {
-  const { data, loading, error } = useApi(`/ai_dashboard/ai-models/`);
+export const ModelsConfidenceChart = ({ modelData = null }) => {
+  const { data, loading: apiLoading, error: apiError } = useApi(`/ai_dashboard/ai-models/`);
 
-  const models = data?.models || [];
+  // Use provided model data or fallback to API
+  const models = modelData || data?.models || [];
   const chartData = models
     .map((m) => ({
       model: m.model_used || "Unknown",
@@ -203,6 +248,9 @@ export const ModelsConfidenceChart = () => {
       accuracy: +(m.accuracy || 0) * 100,
     }))
     .sort((a, b) => b.avg_confidence - a.avg_confidence);
+
+  const loading = modelData ? false : apiLoading;
+  const error = modelData ? null : apiError;
 
   const topModel = chartData.length > 0 ? chartData[0] : null;
 

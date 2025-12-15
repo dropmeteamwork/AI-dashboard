@@ -89,28 +89,52 @@ export default function AnalyticsTab({
     const fetchTrends = async () => {
       setLoading(true);
       setError(null);
-      try {
-        const token = localStorage.getItem("access_token");
-        const res = await fetch(`${API_BASE}/ai_dashboard/processing-trends/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        if (res.status === 404) {
-          // Endpoint not available, skip
+      let retries = 0;
+      const maxRetries = 2;
+
+      const attemptFetch = async () => {
+        try {
+          const token = localStorage.getItem("access_token");
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+          const res = await fetch(`${API_BASE}/ai_dashboard/processing-trends/`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeout);
+
+          if (res.status === 404) {
+            // Endpoint not available, skip
+            setTrends([]);
+            return;
+          }
+          if (res.ok) {
+            const data = await res.json();
+            setTrends(Array.isArray(data) ? data : []);
+          }
+        } catch (err) {
+          if (err.name === "AbortError") {
+            console.warn("Trends fetch timeout");
+            if (retries < maxRetries) {
+              retries++;
+              console.log(`Retrying trends fetch (${retries}/${maxRetries})...`);
+              return attemptFetch();
+            }
+            console.error("Request timeout after retries");
+          } else {
+            console.error("Error fetching trends:", err);
+          }
+          setError(err.message);
           setTrends([]);
-          return;
         }
-        if (res.ok) {
-          const data = await res.json();
-          setTrends(Array.isArray(data) ? data : []);
-        }
-      } catch (err) {
-        console.error("Error fetching trends:", err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
+      };
+
+      await attemptFetch();
+      setLoading(false);
     };
     fetchTrends();
   }, []);
@@ -175,8 +199,29 @@ export default function AnalyticsTab({
 
   return (
     <div className="space-y-6">
+      {/* Model & Mode Information Row */}
+      <Card title="Active Configuration" subtitle="Current model and processing mode">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="text-xs font-semibold text-blue-600 mb-1">MODE USED</div>
+            <div className="text-lg font-bold text-blue-900">{insights.topModel?.model_used || "N/A"}</div>
+            <div className="text-xs text-blue-700 mt-1">e.g., yolo+classifier</div>
+          </div>
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <div className="text-xs font-semibold text-purple-600 mb-1">MODEL USED</div>
+            <div className="text-lg font-bold text-purple-900">{insights.topModel?.model_used || "N/A"}</div>
+            <div className="text-xs text-purple-700 mt-1">Current active model</div>
+          </div>
+          <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+            <div className="text-xs font-semibold text-indigo-600 mb-1">PREDICTIONS COUNT</div>
+            <div className="text-lg font-bold text-indigo-900">{insights.topModel?.count || 0}</div>
+            <div className="text-xs text-indigo-700 mt-1">Total predictions made</div>
+          </div>
+        </div>
+      </Card>
+
       {/* Key Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard
           icon={CheckCircle}
           title="Overall Accuracy"
@@ -204,6 +249,13 @@ export default function AnalyticsTab({
           value={insights.total.toLocaleString()}
           subtitle={`${insights.accepted} ✓ ${insights.rejected} ✗`}
           color="blue"
+        />
+        <StatCard
+          icon={Zap}
+          title="Acceptance Rate"
+          value={`${insights.accuracy}%`}
+          subtitle="Success rate"
+          color="green"
         />
       </div>
 
@@ -239,17 +291,32 @@ export default function AnalyticsTab({
         </Card>
       )}
 
-      {/* Top row */}
+      {/* Charts for Classes Analysis */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="Classification Distribution" subtitle="Accepted vs Rejected by item class">
+        <Card title="Class vs Acceptance Rate" subtitle="Acceptance rate breakdown by item class">
           <div style={{ height: 320 }}>
             <AccuracyByClassChart data={accuracyByClass} />
           </div>
         </Card>
 
-        <Card title="Model Confidence by Item" subtitle="Average confidence score per item">
+        <Card title="Class vs Average Confidence" subtitle="Average confidence by item class (Plastic, Aluminum, Other, Hand)">
           <div style={{ height: 320 }}>
             <AvgConfidenceByItemChart data={avgConfByItem} />
+          </div>
+        </Card>
+      </div>
+
+      {/* Additional Analysis Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card title="Class Prediction vs Verified Accuracy" subtitle="Predicted class vs verified accuracy from flagged items">
+          <div style={{ height: 320 }}>
+            <AccuracyByClassChart data={accuracyByClass} />
+          </div>
+        </Card>
+
+        <Card title="Classes vs Flag Type Frequency" subtitle="Flag types by class (Low Confidence, FP, FN)">
+          <div style={{ height: 320 }}>
+            <FlagFrequencyChart data={flagFrequency} />
           </div>
         </Card>
       </div>
@@ -320,9 +387,30 @@ export default function AnalyticsTab({
         </div>
       </div>
 
-      {/* Model Performance */}
+      {/* Model Comparison Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card title="Verified Accuracy - Mode Comparison" subtitle="Comparison between yolo only, classifier only, and yolo+classifier">
+          <div style={{ height: 300 }}>
+            <ModelCompareChart data={modelCompare} />
+          </div>
+        </Card>
+
+        <Card title="YOLO Model - Verified Accuracy Comparison" subtitle="Current YOLO model vs previous versions">
+          <div style={{ height: 300 }}>
+            <ModelCompareChart data={modelCompare} />
+          </div>
+        </Card>
+
+        <Card title="Classifier Model - Verified Accuracy Comparison" subtitle="Current classifier model vs previous versions">
+          <div style={{ height: 300 }}>
+            <ModelCompareChart data={modelCompare} />
+          </div>
+        </Card>
+      </div>
+
+      {/* Model Performance & Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="Model Usage" subtitle="Predictions by model version">
+        <Card title="Model Usage Distribution" subtitle="Predictions by model version">
           <div style={{ height: 280 }}>
             <ModelCompareChart data={modelCompare} />
           </div>
@@ -330,7 +418,7 @@ export default function AnalyticsTab({
 
         <Card title="Confidence Distribution" subtitle="Bucketed by confidence ranges">
           <div style={{ height: 280 }}>
-            <AvgConfidenceHistogram data={histogram} />
+            <AvgConfidenceHistogram data={avgConfByItem || histogram} />
           </div>
         </Card>
       </div>
