@@ -31,9 +31,10 @@ export const useApi = (endpoint) => {
 
     const fetchData = async () => {
       const ac = new AbortController();
-      const timeout = setTimeout(() => ac.abort(), 4000); // 4 second timeout
+      const timeout = setTimeout(() => ac.abort(), 6000); // 6 second timeout
 
       try {
+        if (!isMounted) return;
         setLoading(true);
         const url = `${BASE_URL}${endpoint}`;
 
@@ -46,6 +47,7 @@ export const useApi = (endpoint) => {
             if (isMounted) {
               setData(null);
               setLoading(false);
+              setError(null);
             }
             return;
           }
@@ -56,26 +58,32 @@ export const useApi = (endpoint) => {
         if (isMounted) {
           setData(json);
           setError(null);
+          setLoading(false);
         }
       } catch (err) {
+        clearTimeout(timeout);
+        
         if (err.name === "AbortError") {
           // Timeout - retry if we haven't exhausted retries
           if (retries < maxRetries) {
             retries++;
             console.log(`API timeout, retrying ${endpoint} (${retries}/${maxRetries})...`);
-            return fetchData();
+            // Wait before retrying to avoid hammering the server
+            setTimeout(() => {
+              if (isMounted) {
+                fetchData();
+              }
+            }, 1000);
+            return;
           }
           if (isMounted) {
-            setError(new Error("Request timeout"));
+            setError(new Error("Request timeout after retries"));
             setData(null);
+            setLoading(false);
           }
         } else if (isMounted) {
           setError(err);
           setData(null);
-        }
-      } finally {
-        clearTimeout(timeout);
-        if (isMounted) {
           setLoading(false);
         }
       }
@@ -120,18 +128,19 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <p className="text-sm text-red-600">Error loading data</p>
+          <p className="text-sm text-red-600">Error loading data: {error?.message}</p>
         </div>
       </div>
     );
   }
 
-  if (!chartData.length) {
+  if (loading || !chartData.length) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <div className="animate-pulse space-y-3">
-            <div className="h-64 bg-gray-200 rounded"></div>
+            <div className="h-8 bg-gray-200 rounded w-32 mx-auto"></div>
+            <div className="h-64 bg-gray-100 rounded"></div>
           </div>
         </div>
       </div>
@@ -262,12 +271,13 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
     );
   }
 
-  if (!chartData.length) {
+  if (loading || !chartData.length) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <div className="animate-pulse space-y-3">
-            <div className="h-64 bg-gray-200 rounded"></div>
+            <div className="h-8 bg-gray-200 rounded w-32 mx-auto"></div>
+            <div className="h-64 bg-gray-100 rounded"></div>
           </div>
         </div>
       </div>
