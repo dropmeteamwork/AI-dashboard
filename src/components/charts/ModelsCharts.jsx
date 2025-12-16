@@ -17,7 +17,7 @@ import { COLORS } from "@/constants/colors";
 const BASE_URL = "https://web-ai-dashboard.up.railway.app";
 
 // -------------------------
-// API Hook - Simple version
+// API Hook
 // -------------------------
 export const useApi = (endpoint) => {
   const [data, setData] = useState(null);
@@ -25,38 +25,23 @@ export const useApi = (endpoint) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    let isMounted = true;
+    const ac = new AbortController();
+    setLoading(true);
 
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const url = `${BASE_URL}${endpoint}`;
-        const response = await fetch(url);
+    const url = `${BASE_URL}${endpoint}`;
 
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
+    fetch(url, { signal: ac.signal })
+      .then((r) => {
+        if (!r.ok) throw new Error(`${r.status}`);
+        return r.json();
+      })
+      .then((j) => setData(j))
+      .catch((e) => {
+        if (e.name !== "AbortError") setError(e);
+      })
+      .finally(() => setLoading(false));
 
-        const json = await response.json();
-        if (isMounted) {
-          setData(json);
-          setError(null);
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error(`API error for ${endpoint}:`, err);
-        if (isMounted) {
-          setError(err);
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => ac.abort();
   }, [endpoint]);
 
   return { data, loading, error };
@@ -87,26 +72,22 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
     minConfidence: chartData.length > 0 ? Math.min(...chartData.map(d => d.avg_confidence)).toFixed(1) : 0,
   };
 
-  if (error) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <p className="text-sm text-red-600">Error loading data: {error?.message}</p>
-          <p className="text-xs text-gray-500 mt-2">Please refresh the page</p>
+          <div className="animate-spin h-8 w-8 border-4 border-blue-200 border-t-blue-600 rounded-full mx-auto mb-2"></div>
+          <p className="text-sm text-gray-600">Loading performance data…</p>
         </div>
       </div>
     );
   }
 
-  if (loading) {
+  if (error) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center space-y-4">
-          <div className="animate-pulse space-y-3">
-            <div className="h-8 bg-gray-200 rounded w-32 mx-auto"></div>
-            <div className="h-64 bg-gray-100 rounded"></div>
-          </div>
-          <p className="text-sm text-gray-500">Loading performance data...</p>
+        <div className="text-center">
+          <p className="text-sm text-red-600">Error loading data</p>
         </div>
       </div>
     );
@@ -115,10 +96,7 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
   if (!chartData.length) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <p className="text-sm text-gray-600">No performance data available</p>
-          <p className="text-xs text-gray-500 mt-1">Data will appear after predictions are made</p>
-        </div>
+        <p className="text-gray-500 text-sm">No performance data available</p>
       </div>
     );
   }
@@ -213,31 +191,33 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
 // -------------------------
 // Models Confidence Chart
 // -------------------------
-export const ModelsConfidenceChart = ({ modelData = null }) => {
-  const { data, loading: apiLoading, error: apiError } = useApi(`/ai_dashboard/ai-models/`);
+export const ModelsConfidenceChart = () => {
+  const { data, loading, error } = useApi(`/ai_dashboard/ai-models/`);
 
-  // Use provided model data or fallback to API
-  const models = modelData || data?.models || [];
+  const models = data?.models || [];
   const chartData = models
-    .map((m) => {
-      // Check if avg_confidence is already a percentage (0-100) or a decimal (0-1)
-      const conf = +(m.avg_confidence || 0);
-      const confidenceValue = conf > 1 ? conf : conf * 100;
-      return {
-        model_used: m.model_used || "Unknown",
-        avg_confidence: confidenceValue,
-        count: m.count || 0,
-        accuracy: +(m.accuracy || 0) > 1 ? +(m.accuracy || 0) : +(m.accuracy || 0) * 100,
-      };
-    })
+    .map((m) => ({
+      model: m.model_used || "Unknown",
+      avg_confidence: +(m.avg_confidence || 0) * 100,
+      count: m.count || 0,
+      accuracy: +(m.accuracy || 0) * 100,
+    }))
     .sort((a, b) => b.avg_confidence - a.avg_confidence);
-
-  const loading = modelData ? false : apiLoading;
-  const error = modelData ? null : apiError;
 
   const topModel = chartData.length > 0 ? chartData[0] : null;
 
-  if (error && !chartData.length) {
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <div className="animate-spin h-8 w-8 border-4 border-purple-200 border-t-purple-600 rounded-full mx-auto mb-2"></div>
+          <p className="text-sm text-gray-600">Loading model data…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
@@ -247,15 +227,10 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
     );
   }
 
-  if (loading || !chartData.length) {
+  if (!chartData.length) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-center space-y-4">
-          <div className="animate-pulse space-y-3">
-            <div className="h-8 bg-gray-200 rounded w-32 mx-auto"></div>
-            <div className="h-64 bg-gray-100 rounded"></div>
-          </div>
-        </div>
+        <p className="text-gray-500 text-sm">No model data available</p>
       </div>
     );
   }
@@ -267,12 +242,28 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
     return "#ef4444"; // red
   };
 
+  const CustomBar = (props) => {
+    const { fill, x, y, width, height, payload } = props;
+    return (
+      <g>
+        <rect
+          x={x}
+          y={y}
+          width={width}
+          height={height}
+          fill={getConfidenceColor(payload.avg_confidence)}
+          rx={4}
+        />
+      </g>
+    );
+  };
+
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
-          <p className="text-sm font-semibold text-gray-900">{data.model_used}</p>
+          <p className="text-sm font-semibold text-gray-900">{data.model}</p>
           <p className="text-xs text-purple-600">Confidence: {data.avg_confidence.toFixed(1)}%</p>
           <p className="text-xs text-gray-600">Predictions: {data.count.toLocaleString()}</p>
           {data.accuracy > 0 && <p className="text-xs text-blue-600">Accuracy: {data.accuracy.toFixed(1)}%</p>}
@@ -288,7 +279,7 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
       {topModel && (
         <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
           <p className="text-xs text-gray-600 mb-1">Top Performing Model</p>
-          <p className="text-lg font-bold text-purple-700">{topModel.model_used}</p>
+          <p className="text-lg font-bold text-purple-700">{topModel.model}</p>
           <p className="text-sm text-gray-600 mt-2">
             Confidence: <span className="font-semibold text-purple-600">{topModel.avg_confidence.toFixed(1)}%</span> • 
             Predictions: <span className="font-semibold text-gray-700">{topModel.count.toLocaleString()}</span>
@@ -304,7 +295,7 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
         >
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
           <XAxis 
-            dataKey="model_used" 
+            dataKey="model" 
             stroke="#9ca3af"
             angle={-45}
             textAnchor="end"
@@ -320,7 +311,7 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
           <Tooltip content={<CustomTooltip />} />
           <Bar 
             dataKey="avg_confidence" 
-            fill="#8B5CF6"
+            shape={<CustomBar />}
             name="Avg Confidence (%)"
             isAnimationActive={true}
             radius={[8, 8, 0, 0]}
@@ -336,7 +327,7 @@ export const ModelsConfidenceChart = ({ modelData = null }) => {
               className="w-3 h-3 rounded"
               style={{ backgroundColor: getConfidenceColor(model.avg_confidence) }}
             ></div>
-            <span className="text-gray-700">{model.model_used}: {model.avg_confidence.toFixed(0)}%</span>
+            <span className="text-gray-700">{model.model}: {model.avg_confidence.toFixed(0)}%</span>
           </div>
         ))}
       </div>

@@ -1,60 +1,9 @@
 // ModelsTab.jsx
-import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { ModelPerformanceChart, ModelsConfidenceChart } from "@/components/charts/ModelsCharts";
 import { Brain } from "lucide-react";
 
-const BASE_URL = "https://web-ai-dashboard.up.railway.app";
-
 const ModelsTab = () => {
-  const [modelData, setModelData] = useState(null);
-
-  useEffect(() => {
-    const fetchModelData = async () => {
-      try {
-        // Simple fetch without AbortController
-        const res = await fetch(`${BASE_URL}/ai_dashboard/analytics/`);
-
-        if (res.ok) {
-          const analyticsData = await res.json();
-          
-          // Use predictions_by_model
-          const predictions = analyticsData.predictions_by_model || [];
-          
-          if (predictions.length === 0) {
-            setModelData([]);
-            return;
-          }
-
-          // Get average confidence from accuracy_by_class
-          const avgConfFromClass = analyticsData.avg_confidence_by_item?.[0]?.avg_conf || 0.75;
-          
-          // Enrich with confidence data
-          const enrichedModels = predictions.map((model, idx) => {
-            // Vary confidence slightly for each model
-            const baseConfidence = avgConfFromClass * 100;
-            const variation = Math.sin(idx) * 15; // Add variation between models
-            return {
-              model_used: model.model_used || "unknown",
-              count: model.count || 0,
-              avg_confidence: Math.max(30, Math.min(95, baseConfidence + variation)),
-            };
-          });
-
-          setModelData(enrichedModels);
-        } else {
-          console.warn("Analytics response not ok:", res.status);
-          setModelData([]);
-        }
-      } catch (err) {
-        console.warn("Failed to fetch model data:", err);
-        setModelData([]);
-      }
-    };
-
-    fetchModelData();
-  }, []);
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -89,7 +38,7 @@ const ModelsTab = () => {
               <p className="text-sm text-gray-600 mt-1">Model confidence levels</p>
             </div>
             <div style={{ height: 350 }} className="w-full">
-              <ModelsConfidenceChart modelData={modelData} />
+              <ModelsConfidenceChart />
             </div>
           </div>
         </Card>
