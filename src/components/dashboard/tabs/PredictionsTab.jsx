@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,33 +8,63 @@ import {
   Flag,
   MessageSquare,
   Filter,
-  Eye,
   RefreshCw,
   Download,
   Loader2,
+  ChevronLeft,
+  ChevronRight,
   AlertCircle,
 } from "lucide-react";
 
 const API_BASE = "https://web-ai-dashboard.up.railway.app";
 
+// Helper to format date safely
+const formatDate = (dateStr) => {
+  if (!dateStr) return "—";
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return "—";
+    return date.toLocaleDateString("en-US", { 
+      month: "short", 
+      day: "numeric",
+      year: "numeric"
+    });
+  } catch {
+    return "—";
+  }
+};
+
+// Helper to get image URL from prediction
+const getImageUrl = (pred) => {
+  // Check for direct image URLs first (if backend provides full URLs)
+  if (pred.image_url) return pred.image_url;
+  if (pred.image_path) return pred.image_path;
+  if (pred.prediction_image) return pred.prediction_image;
+  
+  // Construct S3 URL from image_s3_key
+  // The S3 bucket is: ai-data-001.s3.eu-central-1.amazonaws.com
+  if (pred.image_s3_key) {
+    return `https://ai-data-001.s3.eu-central-1.amazonaws.com/${pred.image_s3_key}`;
+  }
+  
+  return null;
+};
+
 const PredictionsTab = () => {
-  const [allPredictions, setAllPredictions] = useState([]); // Cache all data
-  const [predictions, setPredictions] = useState([]);
-  const [seenPredictions, setSeenPredictions] = useState(new Set());
+  // Cache all data and paginate client-side
+  const [allPredictions, setAllPredictions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // Filter states
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilters, setSelectedFilters] = useState([]);
-  const [classFilter, setClassFilter] = useState("all");
-  const [confidenceFilter, setConfidenceFilter] = useState("all");
+  const hasFetched = useRef(false);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   const pageSize = 20;
+
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [classFilter, setClassFilter] = useState("all");
+  const [confidenceFilter, setConfidenceFilter] = useState("all");
 
   // Flag states
   const [flaggedItems, setFlaggedItems] = useState(new Set());
@@ -42,68 +72,56 @@ const PredictionsTab = () => {
   const [commentOpen, setCommentOpen] = useState(new Set());
   const [selectedEdgeCase, setSelectedEdgeCase] = useState(new Set());
   const [comments, setComments] = useState({});
+  const [imagePreview, setImagePreview] = useState(null);
 
-  // Fetch all predictions once on mount
-  useEffect(() => {
-    const fetchPredictions = async () => {
-      setLoading(true);
-      setError(null);
+  // Fetch all predictions once
+  const fetchPredictions = async () => {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const res = await fetch(`${API_BASE}/ai_dashboard/predictions/`);
+    try {
+      const res = await fetch(`${API_BASE}/ai_dashboard/predictions/`);
 
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        
-        const data = await res.json();
-        
-        // Handle paginated response format (Django REST Framework style)
-        if (data.results && typeof data.count === 'number') {
-          // Server returned paginated data
-          setAllPredictions(data.results);
-          setPredictions(data.results.slice(0, pageSize));
-          setTotalCount(data.count);
-          setTotalPages(Math.ceil(data.count / pageSize));
-        } else if (Array.isArray(data)) {
-          // Backend returned all data as array - use client-side pagination
-          // Limit to 500 items for better performance
-          const limitedData = data.slice(0, 500);
-          setAllPredictions(limitedData);
-          setPredictions(limitedData.slice(0, pageSize));
-          setTotalCount(limitedData.length);
-          setTotalPages(Math.ceil(limitedData.length / pageSize));
-        }
-      } catch (err) {
-        console.error("Failed to fetch predictions:", err);
-        setError(err.message);
-        setAllPredictions([]);
-        setPredictions([]);
-        setTotalCount(0);
-        setTotalPages(1);
-      } finally {
-        setLoading(false);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
-    };
+      
+      const data = await res.json();
+      
+      // Handle paginated response format or plain array
+      if (data.results && Array.isArray(data.results)) {
+        setAllPredictions(data.results);
+      } else if (Array.isArray(data)) {
+        setAllPredictions(data);
+      } else {
+        setAllPredictions([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch predictions:", err);
+      setError(err.message);
+      setAllPredictions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchPredictions();
+  // Fetch only once on mount
+  useEffect(() => {
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      fetchPredictions();
+    }
   }, []);
 
-  // Paginate the cached data when page changes
-  useEffect(() => {
-    if (allPredictions.length > 0) {
-      const startIndex = (currentPage - 1) * pageSize;
-      const paginatedData = allPredictions.slice(startIndex, startIndex + pageSize);
-      setPredictions(paginatedData);
-    }
-  }, [currentPage, allPredictions]);
+  // Computed values
+  const totalCount = allPredictions.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
-  // Separate new and seen predictions
-  const { newPredictions, oldPredictions } = useMemo(() => {
-    const newPreds = predictions.filter((p) => !seenPredictions.has(p.id));
-    const oldPreds = predictions.filter((p) => seenPredictions.has(p.id));
-    return { newPredictions: newPreds, oldPredictions: oldPreds };
-  }, [predictions, seenPredictions]);
+  // Get current page's predictions
+  const predictions = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return allPredictions.slice(startIndex, startIndex + pageSize);
+  }, [allPredictions, currentPage, pageSize]);
 
   // Apply client-side filters to current page data
   const filteredPredictions = useMemo(() => {
@@ -139,13 +157,6 @@ const PredictionsTab = () => {
 
     return filtered;
   }, [predictions, searchTerm, classFilter, confidenceFilter]);
-
-  // Mark as seen
-  const markAsSeen = () => {
-    const newSeenIds = new Set(seenPredictions);
-    newPredictions.forEach((p) => newSeenIds.add(p.id));
-    setSeenPredictions(newSeenIds);
-  };
 
   // Toggle flag
   const toggleFlag = (id) => {
@@ -202,35 +213,37 @@ const PredictionsTab = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Predictions</h2>
-        <p className="text-gray-600">Browse, filter, and manage all predictions with flagging and commenting options</p>
+      <div className="flex justify-between items-start mb-6">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Predictions</h2>
+          <p className="text-gray-600">
+            Showing {predictions.length} of {totalCount.toLocaleString()} predictions • Page {currentPage} of {totalPages}
+          </p>
+        </div>
+        <Button
+          onClick={() => { hasFetched.current = false; fetchPredictions(); }}
+          variant="outline"
+          className="flex items-center gap-2"
+          disabled={loading}
+        >
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
-      {/* Loading indicator - doesn't block UI */}
-      {loading && predictions.length === 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
-          <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-          <p className="text-sm text-blue-700">Loading predictions...</p>
+      {/* Error display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+          <AlertCircle className="h-4 w-4 text-red-600" />
+          <p className="text-sm text-red-700">Error loading predictions: {error}</p>
         </div>
       )}
 
-      {/* New Predictions Alert */}
-      {newPredictions.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Eye className="h-5 w-5 text-blue-600" />
-            <div>
-              <p className="font-semibold text-blue-900">{newPredictions.length} New Predictions</p>
-              <p className="text-sm text-blue-700">New predictions are shown separately</p>
-            </div>
-          </div>
-          <Button
-            onClick={markAsSeen}
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            Mark as Seen
-          </Button>
+      {/* Loading indicator */}
+      {loading && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-center gap-3">
+          <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+          <p className="text-sm text-blue-700">Loading predictions...</p>
         </div>
       )}
 
@@ -309,7 +322,7 @@ const PredictionsTab = () => {
           <div>
             <h3 className="font-semibold text-gray-900">Predictions ({filteredPredictions.length})</h3>
             <p className="text-sm text-gray-600 mt-1">
-              {newPredictions.length} new • {oldPredictions.length} seen
+              Page {currentPage} of {totalPages} • {totalCount.toLocaleString()} total
             </p>
           </div>
           <Button
@@ -326,6 +339,7 @@ const PredictionsTab = () => {
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">ID</th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-700">Image</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Class</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Brand</th>
                 <th className="px-6 py-3 text-right font-semibold text-gray-700">Confidence</th>
@@ -339,11 +353,33 @@ const PredictionsTab = () => {
               {filteredPredictions.map((pred, idx) => (
                 <tr
                   key={pred.id}
-                  className={`hover:bg-gray-50 transition ${
-                    !seenPredictions.has(pred.id) ? "bg-blue-50" : ""
-                  }`}
+                  className="hover:bg-gray-50 transition"
                 >
                   <td className="px-6 py-4 text-gray-900 font-medium">{pred.id}</td>
+                  <td className="px-6 py-4">
+                    {getImageUrl(pred) ? (
+                      <button
+                        onClick={() => setImagePreview(getImageUrl(pred))}
+                        className="relative group"
+                      >
+                        <img
+                          src={getImageUrl(pred)}
+                          alt={`Prediction ${pred.id}`}
+                          className="h-12 w-12 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition"
+                          onError={(e) => {
+                            e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect fill='%23e5e7eb' width='48' height='48'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-family='system-ui' font-size='12' fill='%239ca3af'%3ENo image%3C/text%3E%3C/svg%3E";
+                          }}
+                        />
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-black text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap pointer-events-none">
+                          Click to view
+                        </div>
+                      </button>
+                    ) : (
+                      <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                        <span className="text-xs text-gray-500">No img</span>
+                      </div>
+                    )}
+                  </td>
                   <td className="px-6 py-4">
                     <Badge className="bg-purple-100 text-purple-800">
                       {pred.item || pred.class || "—"}
@@ -407,9 +443,7 @@ const PredictionsTab = () => {
                     )}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
-                    {pred.timestamp
-                      ? new Date(pred.timestamp).toLocaleDateString()
-                      : "—"}
+                    {formatDate(pred.timestamp || pred.created_at)}
                   </td>
                 </tr>
               ))}
@@ -506,6 +540,39 @@ const PredictionsTab = () => {
           </div>
         </Card>
       ))}
+
+      {/* Image Preview Modal */}
+      {imagePreview && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => setImagePreview(null)}
+        >
+          <div
+            className="bg-white rounded-lg max-w-2xl max-h-[90vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-semibold text-gray-900">Image Preview</h3>
+              <button
+                onClick={() => setImagePreview(null)}
+                className="text-gray-500 hover:text-gray-700 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4">
+              <img
+                src={imagePreview}
+                alt="Preview"
+                className="max-w-full h-auto"
+                onError={(e) => {
+                  e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-family='system-ui' font-size='16' fill='%239ca3af'%3EImage not found%3C/text%3E%3C/svg%3E";
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

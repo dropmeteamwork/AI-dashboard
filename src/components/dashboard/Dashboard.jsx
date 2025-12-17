@@ -58,8 +58,47 @@ const Dashboard = () => {
           results[1].status === "fulfilled" ? results[1].value : [],
         ]);
 
+        let finalMachinesData = machinesData;
+        
+        // If machines is empty, get brands from predictions as fallback
+        if (!finalMachinesData || finalMachinesData.length === 0) {
+          try {
+            const predictionsData = await fetchJson("/ai_dashboard/predictions/");
+            const uniqueMachines = {};
+            if (Array.isArray(predictionsData)) {
+              predictionsData.forEach(pred => {
+                const machineName = pred.machine_name || pred.brand || "unknown";
+                if (!uniqueMachines[machineName]) {
+                  uniqueMachines[machineName] = {
+                    machine_id: machineName,
+                    machine_name: machineName,
+                    total_predictions: 0,
+                    avg_confidence: 0,
+                    status: "active",
+                    last_seen: new Date().toISOString(),
+                    online: true,
+                    accepted: 0,
+                    rejected: 0,
+                    total: 0
+                  };
+                }
+                uniqueMachines[machineName].total_predictions += 1;
+                uniqueMachines[machineName].total += 1;
+                if (pred.confidence) {
+                  uniqueMachines[machineName].avg_confidence = 
+                    (uniqueMachines[machineName].avg_confidence * (uniqueMachines[machineName].total_predictions - 1) + pred.confidence) 
+                    / uniqueMachines[machineName].total_predictions;
+                }
+              });
+            }
+            finalMachinesData = Object.values(uniqueMachines);
+          } catch (err) {
+            console.warn("Could not fetch predictions as fallback for machines:", err);
+          }
+        }
+
         setAnalytics(analyticsData);
-        setMachines(machinesData);
+        setMachines(finalMachinesData);
 
         const accuracy = analyticsData?.accuracy_by_class || [];
         const total = accuracy.reduce((s, c) => s + (c.total || 0), 0);
@@ -85,7 +124,7 @@ const Dashboard = () => {
           rejected,
           avg_confidence: Math.round(avg * 1000) / 10,
           flagged: flagCount,
-          active_machines: `${machinesData.filter((m) => m.online).length}/${machinesData.length}`,
+          active_machines: `${finalMachinesData.filter((m) => m.online).length}/${finalMachinesData.length}`,
         });
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
@@ -119,6 +158,8 @@ const Dashboard = () => {
   const flagFrequency = filteredAnalytics?.flag_frequency || [];
   const modelCompare = filteredAnalytics?.model_compare || filteredAnalytics?.predictions_by_model || [];
   const brandsSummary = filteredAnalytics?.brands_summary || [];
+  const decisionDuration = filteredAnalytics?.decision_duration_by_item || [];
+  const histogram = filteredAnalytics?.avg_confidence_by_item || [];
 
   const topModel = [...(filteredAnalytics?.predictions_by_model || [])].sort(
     (a, b) => b.count - a.count
@@ -143,6 +184,7 @@ const Dashboard = () => {
           overview={overview}
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
+          machines={machines}
         />
 
         {/* Main content */}
@@ -150,7 +192,7 @@ const Dashboard = () => {
           {activeTab === "overview" && (
             <OverviewTab overview={filteredOverview} topModel={topModel} />
           )}
-          {activeTab === "machines" && <MachinesTab />}
+          {activeTab === "machines" && <MachinesTab data={machines} />}
           {activeTab === "predictions" && <PredictionsTab />}
           {activeTab === "flags" && <FlagsTab flagFrequency={flagFrequency} />}
           {activeTab === "flagged_items" && <FlaggedItemsTab />}
@@ -163,8 +205,8 @@ const Dashboard = () => {
               brandsSummary={brandsSummary}
               modelCompare={modelCompare}
               flagFrequency={flagFrequency}
-              decisionDuration={analytics?.decision_duration_by_item || []}
-              histogram={analytics?.avg_confidence_by_item || []}
+              decisionDuration={decisionDuration}
+              histogram={histogram}
             />
           )}
           {activeTab === "brand_insights" && (
@@ -195,6 +237,9 @@ const Dashboard = () => {
               brandsSummary={brandsSummary}
               modelCompare={modelCompare}
               flagFrequency={flagFrequency}
+              decisionDuration={decisionDuration}
+              histogram={histogram}
+              machines={machines}
             />
           )}
           {activeTab === "admins" && <AdminTab />}

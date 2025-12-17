@@ -2,7 +2,6 @@
 import { Activity, Cpu, Flag, Box, BarChart3, Eye, Layers, FileText, AlertTriangle, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { THEME } from "./theme";
-import { MachinesStatusList } from "@/components/charts/MachineCharts";
 
 const tabs = [
   { key: "overview", label: "Overview", icon: Activity },
@@ -18,7 +17,7 @@ const tabs = [
 
 ];
 
-const Sidebar = ({ activeTab, setActiveTab, overview, sidebarOpen, setSidebarOpen }) => {
+const Sidebar = ({ activeTab, setActiveTab, overview, sidebarOpen, setSidebarOpen, machines = [] }) => {
   return (
     <>
       {/* Overlay for mobile */}
@@ -111,7 +110,30 @@ const Sidebar = ({ activeTab, setActiveTab, overview, sidebarOpen, setSidebarOpe
         {/* Machine List */}
         <div style={{ padding: 16 }}>
           <h3 className="text-sm font-semibold mb-2">Machines</h3>
-          <MachinesStatusList />
+          {machines && machines.length > 0 ? (
+            <div className="space-y-2">
+              {machines.map((m, idx) => (
+                <div 
+                  key={idx} 
+                  className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${m.online ? "bg-green-500" : "bg-red-500"}`}></div>
+                    <span className="text-sm font-medium text-gray-800">
+                      {(m.machine_name || m.name || "Unknown").replace(/_/g, " ")}
+                    </span>
+                  </div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${
+                    m.online ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                  }`}>
+                    {m.online ? "Online" : "Offline"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">No machines available</p>
+          )}
         </div>
       </aside>
     </>

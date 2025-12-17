@@ -25,6 +25,31 @@ const AdminTab = () => {
     { value: "Machine owner", label: "Machine Owner - Access to machine and overview endpoints" },
   ];
 
+  // Refresh access token using refresh token
+  const refreshAccessToken = async () => {
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (!refreshToken) {
+      throw new Error("No refresh token available. Please log in again.");
+    }
+
+    const res = await fetch(`${API_BASE}/ai_dashboard/dashboard-admin/token/refresh/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh: refreshToken }),
+    });
+
+    if (!res.ok) {
+      // Refresh token also expired - need to re-login
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      throw new Error("Session expired. Please log in again.");
+    }
+
+    const data = await res.json();
+    localStorage.setItem("access_token", data.access);
+    return data.access;
+  };
+
   // Register new admin
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,7 +72,7 @@ const AdminTab = () => {
     }
 
     try {
-      const token = localStorage.getItem("access_token");
+      let token = localStorage.getItem("access_token");
       
       const payload = {
         username: formData.username,
@@ -57,14 +82,29 @@ const AdminTab = () => {
         type: formData.type,
       };
 
-      const res = await fetch(`${API_BASE}/ai_dashboard/dashboard-admin/register/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify(payload),
-      });
+      // Helper function to make the API call
+      const makeRequest = async (accessToken) => {
+        return await fetch(`${API_BASE}/ai_dashboard/dashboard-admin/register/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+          },
+          body: JSON.stringify(payload),
+        });
+      };
+
+      let res = await makeRequest(token);
+
+      // If token expired (401), try to refresh and retry
+      if (res.status === 401) {
+        try {
+          token = await refreshAccessToken();
+          res = await makeRequest(token);
+        } catch (refreshErr) {
+          throw new Error(refreshErr.message);
+        }
+      }
 
       const data = await res.json();
 
@@ -111,18 +151,22 @@ const AdminTab = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-2">
-        <Users className="h-6 w-6" style={{ color: COLORS.PRIMARY }} />
-        <h2 className="text-2xl font-bold text-gray-900">Admin Management</h2>
-      </div>
-      <p className="text-gray-600">Register new dashboard administrator accounts</p>
-
-      {/* Registration Form Card */}
-      <Card className="max-w-xl p-6 border border-gray-200">
-        <div className="flex items-center gap-2 mb-6">
-          <UserPlus className="h-5 w-5" style={{ color: COLORS.PRIMARY }} />
-          <h3 className="text-lg font-semibold text-gray-900">Register New Admin</h3>
+      <div className="text-center mb-6">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <Users className="h-6 w-6" style={{ color: COLORS.PRIMARY }} />
+          <h2 className="text-2xl font-bold text-gray-900">Admin Management</h2>
         </div>
+        <p className="text-gray-600">Register new dashboard administrator accounts</p>
+      </div>
+
+      {/* Centered Form Container */}
+      <div className="flex justify-center">
+        {/* Registration Form Card */}
+        <Card className="w-full max-w-md p-6 border border-gray-200">
+          <div className="flex items-center gap-2 mb-6">
+            <UserPlus className="h-5 w-5" style={{ color: COLORS.PRIMARY }} />
+            <h3 className="text-lg font-semibold text-gray-900">Register New Admin</h3>
+          </div>
 
         {/* Error Message */}
         {error && (
@@ -280,15 +324,18 @@ const AdminTab = () => {
           </div>
         </form>
       </Card>
+      </div>
 
-      {/* Info Card */}
-      <Card className="max-w-xl p-4 border border-blue-200 bg-blue-50">
-        <h4 className="font-medium text-blue-900 mb-2">User Type Information</h4>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li><strong>Administrator:</strong> Full access to all dashboard endpoints and features</li>
-          <li><strong>Machine Owner:</strong> Limited access to machine monitoring and overview data</li>
-        </ul>
-      </Card>
+      {/* Info Card - Centered */}
+      <div className="flex justify-center">
+        <Card className="w-full max-w-md p-4 border border-blue-200 bg-blue-50">
+          <h4 className="font-medium text-blue-900 mb-2">User Type Information</h4>
+          <ul className="text-sm text-blue-800 space-y-1">
+            <li><strong>Administrator:</strong> Full access to all dashboard endpoints and features</li>
+            <li><strong>Machine Owner:</strong> Limited access to machine monitoring and overview data</li>
+          </ul>
+        </Card>
+      </div>
     </div>
   );
 };

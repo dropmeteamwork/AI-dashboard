@@ -58,6 +58,8 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
   const series = data?.series || [];
   const chartData = series.map((s) => ({
     day: s.day,
+    // Format date for display (MM/DD)
+    displayDay: s.day ? new Date(s.day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : s.day,
     avg_confidence: +(s.avg_confidence || s.avg_conf || 0) * 100,
     accuracy: +(s.accuracy || 0) * 100,
     precision: +(s.precision || 0) * 100,
@@ -136,10 +138,10 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
       </div>
 
       {/* Chart */}
-      <ResponsiveContainer width="100%" height={350}>
+      <ResponsiveContainer width="100%" height={300}>
         <LineChart 
           data={chartData}
-          margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
+          margin={{ top: 5, right: 20, left: 0, bottom: 60 }}
         >
           <defs>
             <linearGradient id="colorConfidence" x1="0" y1="0" x2="0" y2="1">
@@ -149,9 +151,13 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
           <XAxis 
-            dataKey="day" 
+            dataKey="displayDay" 
             stroke="#9ca3af"
-            style={{ fontSize: "12px" }}
+            tick={{ fontSize: 10 }}
+            interval={0}
+            angle={-45}
+            textAnchor="end"
+            dy={10}
           />
           <YAxis 
             stroke="#9ca3af"
@@ -287,49 +293,54 @@ export const ModelsConfidenceChart = () => {
         </div>
       )}
 
-      {/* Chart */}
-      <ResponsiveContainer width="100%" height={320}>
-        <BarChart 
-          data={chartData}
-          margin={{ top: 20, right: 20, left: 0, bottom: 60 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-          <XAxis 
-            dataKey="model" 
-            stroke="#9ca3af"
-            angle={-45}
-            textAnchor="end"
-            height={80}
-            style={{ fontSize: "12px" }}
-          />
-          <YAxis 
-            stroke="#9ca3af"
-            unit="%"
-            domain={[0, 100]}
-            style={{ fontSize: "12px" }}
-          />
-          <Tooltip content={<CustomTooltip />} />
-          <Bar 
-            dataKey="avg_confidence" 
-            shape={<CustomBar />}
-            name="Avg Confidence (%)"
-            isAnimationActive={true}
-            radius={[8, 8, 0, 0]}
-          />
-        </BarChart>
-      </ResponsiveContainer>
-
-      {/* Model Count Legend */}
-      <div className="grid grid-cols-2 gap-2 text-xs">
-        {chartData.map((model, idx) => (
-          <div key={idx} className="flex items-center gap-2 p-2 bg-gray-50 rounded">
-            <div 
-              className="w-3 h-3 rounded"
-              style={{ backgroundColor: getConfidenceColor(model.avg_confidence) }}
-            ></div>
-            <span className="text-gray-700">{model.model}: {model.avg_confidence.toFixed(0)}%</span>
+      {/* Chart with legend overlay */}
+      <div className="relative bg-white rounded-md">
+        {/* Legend - absolute top-right inside the card */}
+        <div className="absolute top-3 right-3 z-10 bg-white/90 border border-gray-100 rounded-md p-2 shadow-sm text-xs">
+          <div className="font-semibold text-gray-700 mb-1">Models</div>
+          <div className="flex flex-col gap-1">
+            {chartData.map((model, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded" style={{ backgroundColor: getConfidenceColor(model.avg_confidence) }} />
+                <span className="text-gray-700 truncate" style={{ maxWidth: 140 }}>{model.model}</span>
+                <span className="ml-2 text-gray-500">{model.avg_confidence.toFixed(0)}%</span>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
+
+        <div style={{ padding: 16 }}>
+          <ResponsiveContainer width="100%" height={240}>
+            <BarChart 
+              data={chartData}
+              margin={{ top: 10, right: 20, left: 0, bottom: 80 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+              <XAxis 
+                dataKey="model" 
+                stroke="#9ca3af"
+                angle={-45}
+                textAnchor="end"
+                tick={{ fontSize: 10, dy: 10 }}
+                interval={0}
+              />
+              <YAxis 
+                stroke="#9ca3af"
+                unit="%"
+                domain={[0, 100]}
+                style={{ fontSize: "12px" }}
+              />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar 
+                dataKey="avg_confidence" 
+                shape={<CustomBar />}
+                name="Avg Confidence (%)"
+                isAnimationActive={true}
+                radius={[8, 8, 0, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );

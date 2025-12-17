@@ -260,15 +260,7 @@ export default function AnalyticsTab({
           <Card
             title="Brand Distribution"
             subtitle={`Top ${Math.min(8, brandsSummary.length)} detected brands`}
-            actions={
-              <button
-                onClick={exportBrands}
-                className="px-3 py-1 text-xs text-white rounded transition"
-                style={{ backgroundColor: COLORS.PRIMARY }}
-              >
-                Export CSV
-              </button>
-            }
+      
           >
             <div className="flex gap-6">
               {/* Pie Chart */}

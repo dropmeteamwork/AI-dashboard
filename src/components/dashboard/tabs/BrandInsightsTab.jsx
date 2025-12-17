@@ -99,41 +99,37 @@ export default function BrandInsightsTab({ brandsSummary = [] }) {
         </div>
       </Card>
 
-      {/* Detection History Table */}
+      {/* Detection History - Horizontal Bar Chart */}
       <Card className="p-6 border border-gray-200">
         <div className="space-y-4">
           <div>
             <h3 className="font-semibold text-gray-900">Detection History</h3>
-            <p className="text-sm text-gray-600 mt-1">Recent detections and counts</p>
+            <p className="text-sm text-gray-600 mt-1">Brand detection counts (top brands)</p>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-y border-gray-200">
-                <tr>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-900">Brand</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-900">Last Detected</th>
-                  <th className="px-4 py-3 text-right font-semibold text-gray-900">Count</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filtered.length > 0 ? (
-                  filtered.map((b, i) => (
-                    <tr key={i} className="hover:bg-gray-50 transition">
-                      <td className="px-4 py-3 font-medium text-gray-900">{b.brand}</td>
-                      <td className="px-4 py-3 text-gray-600">{new Date(b.last_seen).toLocaleString()}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-gray-900">{b.total}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="3" className="px-4 py-8 text-center text-gray-500">
-                      No data available for the selected filters
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          {filtered.length > 0 ? (
+            <div style={{ height: 400 }} className="w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={filtered.slice(0, 15)} // Show top 15 brands
+                  layout="vertical"
+                  margin={{ top: 5, right: 30, left: 150, bottom: 5 }}
+                >
+                  <CartesianGrid stroke="#e5e7eb" />
+                  <XAxis type="number" />
+                  <YAxis dataKey="brand" type="category" width={145} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: "#fff", border: "1px solid #e5e7eb" }}
+                    formatter={(value) => `${value} detections`}
+                  />
+                  <Bar dataKey="total" fill="#16a34a" radius={[0, 8, 8, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="px-4 py-8 text-center text-gray-500">
+              No data available for the selected filters
+            </div>
+          )}
         </div>
       </Card>
     </div>

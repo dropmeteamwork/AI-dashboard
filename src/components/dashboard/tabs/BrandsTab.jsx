@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { COLORS } from "@/constants/colors";
 import { BrandsPieChart, PerformanceRadarChart } from "../../charts/ChartsAnalytics";
+import { exportToCSV } from "@/utils/exportCsv";
 import { 
   Search, 
   ChevronLeft, 
@@ -18,7 +19,8 @@ import {
   List,
   X,
   Loader2,
-  Image as ImageIcon
+  Image as ImageIcon,
+  FileDown
 } from "lucide-react";
 
 export default function BrandsTab() {
@@ -198,14 +200,32 @@ export default function BrandsTab() {
     ? ((brandStats.total / totalDetections) * 100).toFixed(2)
     : 0;
 
+  const handleExportCSV = () => {
+    exportToCSV(brandsSummary, "brands_report", [
+      { key: "brand", label: "Brand" },
+      { key: "total", label: "Total Detections" },
+      { key: "last_seen", label: "Last Seen" },
+      { key: "firstSeen", label: "First Seen" },
+    ]);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="rounded-lg p-6" style={{ background: `linear-gradient(90deg, ${COLORS.TINT_50}, ${COLORS.TINT_50})`, border: `1px solid ${COLORS.GREEN_BORDER}` }}>
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Brand Insights</h2>
-        <p className="text-gray-600">
-          Explore {brandsSummary.length} brands with {totalDetections.toLocaleString()} total detections
-        </p>
+      <div className="rounded-lg p-6 flex justify-between items-center" style={{ background: `linear-gradient(90deg, ${COLORS.TINT_50}, ${COLORS.TINT_50})`, border: `1px solid ${COLORS.GREEN_BORDER}` }}>
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Brand Insights</h2>
+          <p className="text-gray-600">
+            Explore {brandsSummary.length} brands with {totalDetections.toLocaleString()} total detections
+          </p>
+        </div>
+        <Button
+          onClick={handleExportCSV}
+          className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+        >
+          <FileDown className="h-4 w-4" />
+          Export CSV
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

@@ -37,7 +37,7 @@ const ModelsTab = () => {
               <h3 className="font-semibold text-gray-900">Confidence Comparison</h3>
               <p className="text-sm text-gray-600 mt-1">Model confidence levels</p>
             </div>
-            <div style={{ height: 350 }} className="w-full">
+            <div style={{ minHeight: 450 }} className="w-full">
               <ModelsConfidenceChart />
             </div>
           </div>

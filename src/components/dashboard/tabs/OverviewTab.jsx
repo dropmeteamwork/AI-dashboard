@@ -8,8 +8,6 @@ import {
   CheckCircle, 
   Clock,
   BarChart3,
-  Brain,
-  Target,
   Activity,
   ArrowRight
 } from "lucide-react";
@@ -54,20 +52,6 @@ const OverviewTab = ({ overview, topModel }) => {
     </Card>
   );
 
-  const FeatureCard = ({ icon: Icon, title, description }) => (
-    <div className="p-6 rounded-lg border border-gray-200 hover:shadow-md transition">
-      <div className="flex gap-4">
-        <div className="p-3 rounded-lg h-fit" style={{ backgroundColor: "rgba(108, 192, 74, 0.1)" }}>
-          <Icon className="h-6 w-6" style={{ color: "#6CC04A" }} />
-        </div>
-        <div className="flex-1">
-          <h4 className="font-semibold text-gray-900 mb-1">{title}</h4>
-          <p className="text-sm text-gray-600">{description}</p>
-        </div>
-      </div>
-    </div>
-  );
-
   if (!stats) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -87,9 +71,6 @@ const OverviewTab = ({ overview, topModel }) => {
           <h1 className="text-4xl font-bold mb-2">AI Dashboard</h1>
           <p className="mb-6 text-lg" style={{ color: "rgba(255,255,255,0.9)" }}>Real-time brand and product detection powered by machine learning</p>
           <div className="flex gap-3 flex-wrap">
-            <Badge className="px-4 py-2 text-sm" style={{ backgroundColor: "white", color: "#6CC04A" }}>Machine Learning</Badge>
-            <Badge className="bg-white/20 text-white px-4 py-2 text-sm border border-white/30">Real-time Processing</Badge>
-            <Badge className="bg-white/20 text-white px-4 py-2 text-sm border border-white/30">Multi-Model Detection</Badge>
           </div>
         </div>
       </div>
@@ -162,63 +143,7 @@ const OverviewTab = ({ overview, topModel }) => {
         </div>
       </div>
 
-      {/* Dashboard Features */}
-      <div>
-        <h2 className="text-2xl font-bold mb-4 text-gray-900">Dashboard Features</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FeatureCard
-            icon={Brain}
-            title="Brand Predictions"
-            description="View all detected brands with confidence scores and detailed image galleries for each brand."
-          />
-          <FeatureCard
-            icon={BarChart3}
-            title="Analytics Dashboard"
-            description="Real-time insights with trends, key metrics, and comprehensive performance analysis."
-          />
-          <FeatureCard
-            icon={Target}
-            title="Brand Insights"
-            description="Deep dive into brand performance, market share, and detection statistics with visual charts."
-          />
-          <FeatureCard
-            icon={Zap}
-            title="Model Comparison"
-            description="Compare multiple AI models side-by-side to understand prediction patterns and accuracy."
-          />
-        </div>
-      </div>
 
-      {/* Quick Start Guide */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
-        <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Activity className="h-5 w-5 text-blue-600" />
-          Quick Start Guide
-        </h3>
-        <div className="space-y-3">
-          <div className="flex gap-3">
-            <Badge className="bg-blue-600 text-white min-w-fit px-3">1</Badge>
-            <div>
-              <p className="font-semibold text-gray-900">Explore Brand Predictions</p>
-              <p className="text-sm text-gray-600">View all detected brands and their confidence scores in real-time.</p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Badge className="bg-blue-600 text-white min-w-fit px-3">2</Badge>
-            <div>
-              <p className="font-semibold text-gray-900">Analyze Trends</p>
-              <p className="text-sm text-gray-600">Check analytics tab to see processing trends and key insights about your data.</p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <Badge className="bg-blue-600 text-white min-w-fit px-3">3</Badge>
-            <div>
-              <p className="font-semibold text-gray-900">Review Flagged Items</p>
-              <p className="text-sm text-gray-600">Investigate items marked for review and adjust detection parameters as needed.</p>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* System Stats Footer */}
       <div className="border-t pt-6">
