@@ -88,8 +88,8 @@ const HeaderResponsive = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod 
             src="/logo.png"
             alt="Drop Me Logo"
             style={{
-              width: isMobile ? 44 : 64,
-              height: isMobile ? 44 : 64,
+              width: isMobile ? 60 : 80,
+              height: isMobile ? 60 : 80,
               objectFit: "contain",
               flexShrink: 0,
             }}

@@ -35,7 +35,7 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod = "all", o
         background: "white",
         borderBottom: "1px solid #e5e7eb",
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-        padding: isMobile ? "12px 16px" : "16px 24px",
+        padding: isMobile ? "8px 16px" : "8px 24px",
       }}
     >
       {/* Main Header Row */}
@@ -45,8 +45,8 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod = "all", o
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: isMobile ? "8px" : "24px",
-          marginBottom: isMobile ? "8px" : "12px",
+          gap: isMobile ? "8px" : "16px",
+          marginBottom: isMobile ? "4px" : "6px",
         }}
       >
         {/* LEFT - Logo and Branding */}
@@ -79,8 +79,8 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod = "all", o
               src="/logo.png"
               alt="AI Engineer Dashboard Logo"
               style={{
-                width: 100,
-                height: 100,
+                width: 80,
+                height: 80,
                 borderRadius: "10px",
                 objectFit: "contain",
                 display: "block",

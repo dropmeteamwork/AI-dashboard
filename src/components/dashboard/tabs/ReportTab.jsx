@@ -20,24 +20,25 @@ const ReportSectionCard = ({ icon: Icon, title, description, onGenerate, isGener
       flexDirection: "column",
       gap: "12px",
       fontFamily: "'Outfit', sans-serif",
+      padding: "16px",
     }}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
         <div style={{
           background: "linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%)",
-          padding: "10px 12px",
+          padding: "8px 10px",
           borderRadius: "8px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           flexShrink: 0,
         }}>
-          <Icon style={{ width: 20, height: 20, color: "#0EA5E9" }} />
+          <Icon style={{ width: 18, height: 18, color: "#0EA5E9" }} />
         </div>
-        <div>
-          <h4 style={{ fontSize: "15px", fontWeight: "600", color: "#111827", marginBottom: "4px" }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#111827", marginBottom: "3px", margin: 0, wordBreak: "break-word" }}>
             {title}
           </h4>
-          <p style={{ fontSize: "13px", color: "#6b7280", margin: 0 }}>
+          <p style={{ fontSize: "12px", color: "#6b7280", margin: 0, wordBreak: "break-word", lineHeight: "1.4" }}>
             {description}
           </p>
         </div>
@@ -47,19 +48,19 @@ const ReportSectionCard = ({ icon: Icon, title, description, onGenerate, isGener
         disabled={isGenerating}
         style={{
           width: "100%",
-          padding: "10px 16px",
+          padding: "8px 12px",
           background: isGenerating ? "#E5E7EB" : "#4CAF50",
           color: isGenerating ? "#6b7280" : "white",
           border: "none",
-          borderRadius: "8px",
-          fontSize: "13px",
+          borderRadius: "6px",
+          fontSize: "12px",
           fontWeight: "600",
           cursor: isGenerating ? "not-allowed" : "pointer",
           transition: "all 0.2s ease",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: "8px",
+          gap: "6px",
           fontFamily: "'Outfit', sans-serif",
           boxShadow: isGenerating ? "none" : "0 2px 8px rgba(76, 175, 80, 0.3)",
           opacity: isGenerating ? 0.6 : 1,
@@ -67,12 +68,12 @@ const ReportSectionCard = ({ icon: Icon, title, description, onGenerate, isGener
       >
         {isGenerating ? (
           <>
-            <Loader style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
+            <Loader style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} />
             Generating...
           </>
         ) : (
           <>
-            <Download style={{ width: 14, height: 14 }} />
+            <Download style={{ width: 12, height: 12 }} />
             Generate Report
           </>
         )}
@@ -337,24 +338,43 @@ export default function ReportTab({
         return;
       }
 
-      // Hide elements that shouldn't be in the report
-      const elementsToHide = element.querySelectorAll(".hide-in-report");
-      elementsToHide.forEach(el => el.style.display = "none");
+      // Make the element visible temporarily
+      const originalDisplay = element.style.display;
+      const originalPosition = element.style.position;
+      const originalVisibility = element.style.visibility;
+      const originalLeft = element.style.left;
+      const originalTop = element.style.top;
+      const originalWidth = element.style.width;
+      
+      element.style.display = "block";
+      element.style.position = "static";
+      element.style.visibility = "visible";
+      element.style.left = "auto";
+      element.style.top = "auto";
+      element.style.width = "100%";
 
-      // Create canvas from the element
+      await new Promise(r => setTimeout(r, 150));
+
+      // Create canvas from the element with better settings
       const canvas = await html2canvas(element, {
         scale: 2,
         logging: false,
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
+        windowWidth: 1000,
+        windowHeight: element.scrollHeight,
       });
 
-      // Restore hidden elements
-      elementsToHide.forEach(el => el.style.display = "");
+      // Restore original styles
+      element.style.display = originalDisplay;
+      element.style.position = originalPosition;
+      element.style.visibility = originalVisibility;
+      element.style.left = originalLeft;
+      element.style.top = originalTop;
+      element.style.width = originalWidth;
 
       // Create PDF
-      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
@@ -363,22 +383,78 @@ export default function ReportTab({
 
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth - 20; // 10mm margins
+      const margin = 15;
+      const topMargin = 25; // Space for small logo
+      const bottomMargin = 15; // Space for footer
+      
+      const imgWidth = pageWidth - (2 * margin);
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      let heightLeft = imgHeight;
-      let position = 10; // Top margin
+      // Calculate how many pages we need
+      const maxHeightPerPage = pageHeight - topMargin - bottomMargin;
+      const totalPages = Math.ceil(imgHeight / maxHeightPerPage);
 
-      // First page
-      pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight - 20;
+      let currentY = 0;
 
-      // Additional pages if needed
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + 10;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight - 20;
+      // Add content pages
+      for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+        // Add new page (except for first page)
+        if (pageIndex > 0) {
+          pdf.addPage();
+        }
+
+        // Calculate slice dimensions
+        const canvasSliceHeight = (maxHeightPerPage / imgWidth) * canvas.width;
+        const sourceY = pageIndex * canvasSliceHeight;
+        const sliceHeight = Math.min(canvasSliceHeight, canvas.height - sourceY);
+
+        // Create canvas slice
+        const sliceCanvas = document.createElement("canvas");
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = sliceHeight;
+        const ctx = sliceCanvas.getContext("2d");
+
+        ctx.drawImage(
+          canvas,
+          0, sourceY,
+          canvas.width, sliceHeight,
+          0, 0,
+          canvas.width, sliceHeight
+        );
+
+        const sliceImgData = sliceCanvas.toDataURL("image/png");
+        const renderedHeight = (sliceHeight * imgWidth) / canvas.width;
+
+        // Add image
+        pdf.addImage(sliceImgData, "PNG", margin, topMargin, imgWidth, renderedHeight);
+      }
+
+      // Add logo and footer to all pages
+      const finalPageCount = pdf.getNumberOfPages();
+      for (let i = 1; i <= finalPageCount; i++) {
+        pdf.setPage(i);
+
+        // Add small logo to top-left
+        try {
+          const logoImg = new Image();
+          logoImg.src = '/logo.png';
+          await new Promise((resolve) => {
+            logoImg.onload = () => {
+              pdf.addImage(logoImg, 'PNG', margin, margin, 12, 12);
+              resolve();
+            };
+            logoImg.onerror = () => resolve();
+            setTimeout(() => resolve(), 80);
+          });
+        } catch (e) {
+          console.warn('Logo could not be loaded');
+        }
+
+        // Add footer
+        pdf.setFontSize(8);
+        pdf.setTextColor(160, 160, 160);
+        const footerText = `Page ${i} of ${finalPageCount} | Generated on ${new Date().toLocaleDateString()}`;
+        pdf.text(footerText, margin, pageHeight - 8);
       }
 
       // Add metadata
@@ -416,7 +492,7 @@ export default function ReportTab({
       const pdfWidth = 210;
       const pdfHeight = 297;
       const margin = 10;
-      const logoSpaceHeight = 20; // Space reserved for logo at top of each page
+      const logoSpaceHeight = 20; // Space reserved for logo at top of each page (15mm logo + 5mm space)
       const contentWidth = pdfWidth - (margin * 2);
 
       const pdf = new jsPDF({
@@ -550,24 +626,30 @@ export default function ReportTab({
       for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
         
-        // Add logo to top-left (40x40mm)
+        // Add logo to top-left (15mm x 15mm, smaller to prevent stretching)
         try {
           const logoImg = new Image();
           logoImg.src = '/logo.png';
-          logoImg.onload = () => {
-            pdf.addImage(logoImg, 'PNG', margin, margin, 15, 15);
-          };
-          // Wait for image to load
-          await new Promise(r => setTimeout(r, 100));
+          await new Promise((resolve, reject) => {
+            logoImg.onload = () => {
+              // Consistent small logo: 15mm x 15mm
+              const logoWidth = 15;
+              const logoHeight = 15;
+              pdf.addImage(logoImg, 'PNG', margin, margin, logoWidth, logoHeight);
+              resolve();
+            };
+            logoImg.onerror = reject;
+            setTimeout(() => resolve(), 100);
+          });
         } catch (e) {
           console.warn('Logo could not be loaded:', e);
         }
         
-        // Add footer with date
-        pdf.setFontSize(10);
-        pdf.setTextColor(128, 128, 128);
+        // Add footer with date and page number
+        pdf.setFontSize(9);
+        pdf.setTextColor(150, 150, 150);
         pdf.text(
-          `AI Dashboard Report - Generated on ${new Date().toLocaleDateString()} - Page ${i} of ${totalPages}`,
+          `Page ${i} of ${totalPages} | Generated on ${new Date().toLocaleDateString()}`,
           margin,
           pdfHeight - 5
         );
@@ -674,146 +756,103 @@ export default function ReportTab({
           onGenerate={() => generateSectionReport("brands", "Brands Analytics")}
           isGenerating={generatingSection === "brands"}
         />
-
-        {/* Flags Report */}
-        <ReportSectionCard
-          icon={FileDown}
-          title="Flagged Items"
-          description="Generate a detailed report for this section"
-          onGenerate={() => generateSectionReport("flags", "Flagged Items")}
-          isGenerating={generatingSection === "flags"}
-        />
       </div>
 
-      {/* Hidden Report Content for Canvas Capture */}
-      <div style={{ display: "none" }}>
+      {/* Hidden Report Content for Canvas Capture - use opacity instead of position off-screen */}
+      <div style={{ opacity: 0, pointerEvents: "none", position: "fixed", width: "900px", zIndex: -1 }}>
         {/* Overview Section */}
-        <div ref={reportSectionRefs.overview}>
-          <div style={{ padding: "24px", background: "white" }}>
-            <h1 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#111827" }}>
-              Dashboard Overview Report
-            </h1>
-            <p style={{ color: "#6b7280", marginBottom: "20px" }}>
-              Generated on {new Date().toLocaleString()}
-            </p>
-            <OverviewTab overview={overview} topModel={topModel} machines={machines} />
-          </div>
+        <div ref={reportSectionRefs.overview} style={{ background: "white", padding: "24px", marginBottom: "0", width: "100%" }}>
+          <h1 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#111827" }}>
+            Dashboard Overview Report
+          </h1>
+          <p style={{ color: "#6b7280", marginBottom: "20px" }}>
+            Generated on {new Date().toLocaleString()}
+          </p>
+          <OverviewTab overview={overview} topModel={topModel} machines={machines} />
         </div>
 
         {/* Analytics Section */}
-        <div ref={reportSectionRefs.analytics}>
-          <div style={{ padding: "24px", background: "white" }}>
-            <h1 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#111827" }}>
-              Analytics & Predictions Report
-            </h1>
-            <p style={{ color: "#6b7280", marginBottom: "20px" }}>
-              Generated on {new Date().toLocaleString()}
-            </p>
-            <AnalyticsTab
-              accuracyByClass={accuracyByClass}
-              avgConfByItem={avgConfByItem}
-              brandsSummary={brandsSummary}
-              modelCompare={modelCompare}
-              flagFrequency={flagFrequency}
-              decisionDuration={decisionDuration}
-              histogram={histogram}
-            />
-          </div>
+        <div ref={reportSectionRefs.analytics} style={{ background: "white", padding: "24px", marginBottom: "0", width: "100%" }}>
+          <h1 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#111827" }}>
+            Analytics & Predictions Report
+          </h1>
+          <p style={{ color: "#6b7280", marginBottom: "20px" }}>
+            Generated on {new Date().toLocaleString()}
+          </p>
+          <AnalyticsTab
+            accuracyByClass={accuracyByClass}
+            avgConfByItem={avgConfByItem}
+            brandsSummary={brandsSummary}
+            modelCompare={modelCompare}
+            flagFrequency={flagFrequency}
+            decisionDuration={decisionDuration}
+            histogram={histogram}
+          />
         </div>
 
         {/* Brands Analytics Section */}
-        <div ref={reportSectionRefs.brands}>
-          <div style={{ padding: "24px", background: "white" }}>
-            <h1 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#111827" }}>
-              Brands Analytics Report
-            </h1>
-            <p style={{ color: "#6b7280", marginBottom: "20px" }}>
-              Generated on {new Date().toLocaleString()}
-            </p>
-            <BrandsAnalyticsTab />
-          </div>
+        <div ref={reportSectionRefs.brands} style={{ background: "white", padding: "24px", marginBottom: "0", width: "100%" }}>
+          <h1 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#111827" }}>
+            Brands Analytics Report
+          </h1>
+          <p style={{ color: "#6b7280", marginBottom: "20px" }}>
+            Generated on {new Date().toLocaleString()}
+          </p>
+          <BrandsAnalyticsTab />
         </div>
 
         {/* Flags Section */}
-        <div ref={reportSectionRefs.flags}>
-          <div style={{ padding: "24px", background: "white" }}>
-            <h1 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#111827" }}>
-              Flagged Items Report
-            </h1>
-            <p style={{ color: "#6b7280", marginBottom: "20px" }}>
-              Generated on {new Date().toLocaleString()}
-            </p>
-            <FlagsTab flagFrequency={flagFrequency} />
-          </div>
+        <div ref={reportSectionRefs.flags} style={{ background: "white", padding: "24px", marginBottom: "0", width: "100%" }}>
+          <h1 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#111827" }}>
+            Flagged Items Report
+          </h1>
+          <p style={{ color: "#6b7280", marginBottom: "20px" }}>
+            Generated on {new Date().toLocaleString()}
+          </p>
+          <FlagsTab flagFrequency={flagFrequency} />
+        </div>
+      </div>
+
+      {/* Full Report Section - for multi-page PDF export */}
+      <div ref={reportRef} style={{ opacity: 0, pointerEvents: "none", position: "fixed", width: "900px", zIndex: -1 }}>
+        {/* Overview Section */}
+        <div data-section="Dashboard Overview" style={{ background: "white", padding: "24px", marginBottom: "0", width: "100%" }}>
+          <h1 style={{ fontSize: "22px", fontWeight: "700", marginBottom: "20px", color: "#111827" }}>
+            Dashboard Overview
+          </h1>
+          <OverviewTab overview={overview} topModel={topModel} machines={machines} />
         </div>
 
-        {/* Full Report Section */}
-        <div ref={reportRef} data-section="Full Report">
-          <div style={{ padding: "24px", background: "white" }}>
-            <h1 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "24px", color: "#111827" }}>
-              Complete AI Dashboard Report
-            </h1>
-            <p style={{ color: "#6b7280", marginBottom: "40px" }}>
-              Generated on {new Date().toLocaleString()}
-            </p>
+        {/* Analytics Section */}
+        <div data-section="Analytics & Predictions" style={{ background: "white", padding: "24px", marginBottom: "0", width: "100%" }}>
+          <h1 style={{ fontSize: "22px", fontWeight: "700", marginBottom: "20px", color: "#111827" }}>
+            Analytics & Predictions
+          </h1>
+          <AnalyticsTab
+            accuracyByClass={accuracyByClass}
+            avgConfByItem={avgConfByItem}
+            brandsSummary={brandsSummary}
+            modelCompare={modelCompare}
+            flagFrequency={flagFrequency}
+            decisionDuration={decisionDuration}
+            histogram={histogram}
+          />
+        </div>
 
-            {/* Overview Section in Full Report */}
-            <div style={{ marginBottom: "40px", paddingBottom: "40px", borderBottom: "1px solid #E5E7EB" }}>
-              <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#111827", marginBottom: "20px" }}>
-                Dashboard Overview
-              </h2>
-              <OverviewTab overview={overview} topModel={topModel} machines={machines} />
-            </div>
+        {/* Brands Analytics Section */}
+        <div data-section="Brands Analytics" style={{ background: "white", padding: "24px", marginBottom: "0", width: "100%" }}>
+          <h1 style={{ fontSize: "22px", fontWeight: "700", marginBottom: "20px", color: "#111827" }}>
+            Brands Analytics
+          </h1>
+          <BrandsAnalyticsTab />
+        </div>
 
-            {/* Analytics Section in Full Report */}
-            <div style={{ marginBottom: "40px", paddingBottom: "40px", borderBottom: "1px solid #E5E7EB" }}>
-              <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#111827", marginBottom: "20px" }}>
-                Analytics & Predictions
-              </h2>
-              <AnalyticsTab
-                accuracyByClass={accuracyByClass}
-                avgConfByItem={avgConfByItem}
-                brandsSummary={brandsSummary}
-                modelCompare={modelCompare}
-                flagFrequency={flagFrequency}
-                decisionDuration={decisionDuration}
-                histogram={histogram}
-              />
-            </div>
-
-            {/* Brands Analytics Section in Full Report */}
-            <div style={{ marginBottom: "40px", paddingBottom: "40px", borderBottom: "1px solid #E5E7EB" }}>
-              <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#111827", marginBottom: "20px" }}>
-                Brands Analytics
-              </h2>
-              <BrandsAnalyticsTab />
-            </div>
-
-            {/* Flags Section in Full Report */}
-            <div style={{ marginBottom: "40px" }}>
-              <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#111827", marginBottom: "20px" }}>
-                Flagged Items
-              </h2>
-              <FlagsTab flagFrequency={flagFrequency} />
-            </div>
-
-            {/* Footer */}
-            <div style={{ borderTop: "1px solid #E5E7EB", paddingTop: "24px", marginTop: "40px", textAlign: "center" }}>
-              <p style={{ color: "#6b7280", marginBottom: "8px" }}>
-                Report generated by Dropme AI Dashboard
-              </p>
-              <p style={{ fontSize: "12px", color: "#9ca3af" }}>
-                {new Date().toLocaleString('en-US', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                  hour12: true
-                })}
-              </p>
-            </div>
-          </div>
+        {/* Flags Section */}
+        <div data-section="Flagged Items" style={{ background: "white", padding: "24px", marginBottom: "0", width: "100%" }}>
+          <h1 style={{ fontSize: "22px", fontWeight: "700", marginBottom: "20px", color: "#111827" }}>
+            Flagged Items
+          </h1>
+          <FlagsTab flagFrequency={flagFrequency} />
         </div>
       </div>
 

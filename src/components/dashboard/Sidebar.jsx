@@ -126,7 +126,7 @@ const Sidebar = ({ activeTab, setActiveTab, overview, sidebarOpen, setSidebarOpe
                 fontFamily: "'Outfit', sans-serif",
               }}
             >
-              Dashboard
+              AI Engineer Dashboard
             </h3>
             <nav style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               {dashboardTabs.map((t) => renderNavButton(t))}
