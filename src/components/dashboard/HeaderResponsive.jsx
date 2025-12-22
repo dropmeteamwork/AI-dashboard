@@ -1,42 +1,49 @@
-// HeaderResponsive.jsx - Mobile-First Responsive Header
-import { RefreshCcw, LogOut, Menu, Bell, Calendar, Search, Clock, X } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+// HeaderResponsive.jsx - Clean Header matching RVM Dashboard style
+import { RefreshCcw, LogOut, Menu, Bell, X } from "lucide-react";
 import { COLORS } from "@/constants/colors";
 import { useState, useEffect } from "react";
 
 const HeaderResponsive = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod = "all", onTimePeriodChange }) => {
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [isTablet, setIsTablet] = useState(window.innerWidth < 1024);
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
-      setIsTablet(window.innerWidth < 1024);
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const timePeriods = [
-    { value: "day", label: "Today" },
-    { value: "month", label: "This Month" },
-    { value: "year", label: "This Year" },
-    { value: "all", label: "All Time" },
-  ];
+  // Update time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
-  const currentPeriod = timePeriods.find(p => p.value === timePeriod)?.label || "All Time";
+  // Format date like "Sun, Dec 21, 2025, 09:28 PM"
+  const formatDateTime = (date) => {
+    const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    const day = date.getDate();
+    const year = date.getFullYear();
+    const time = date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+    return `${weekday}, ${month} ${day}, ${year}, ${time}`;
+  };
 
   return (
     <header
       style={{
         background: "white",
         borderBottom: "1px solid #e5e7eb",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.08)",
-        padding: isMobile ? "12px 12px" : "16px 24px",
+        padding: isMobile ? "12px 16px" : "14px 24px",
         position: "sticky",
         top: 0,
         zIndex: 100,
@@ -50,11 +57,10 @@ const HeaderResponsive = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod 
           alignItems: "center",
           justifyContent: "space-between",
           gap: isMobile ? "8px" : "24px",
-          marginBottom: isMobile ? "10px" : "12px",
         }}
       >
-        {/* LEFT - Logo and Branding */}
-        <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "8px" : "16px", flex: 1, minWidth: 0 }}>
+        {/* LEFT - Logo, Brand Name and Date */}
+        <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "10px" : "14px", flex: 1, minWidth: 0 }}>
           {/* Hamburger menu for mobile */}
           {isMobile && (
             <button
@@ -77,81 +83,30 @@ const HeaderResponsive = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod 
             </button>
           )}
 
-          {/* Logo and Title */}
-          <div style={{ display: "flex", alignItems: "center", gap: isMobile ? "8px" : "14px", minWidth: 0 }}>
-            <img
-              src="/logo.png"
-              alt="Logo"
-              style={{
-                width: isMobile ? 36 : 48,
-                height: isMobile ? 36 : 48,
-                borderRadius: "10px",
-                objectFit: "contain",
-                flexShrink: 0,
-                boxShadow: "0 2px 8px rgba(108, 192, 74, 0.15)",
-              }}
-            />
+          {/* Logo - bigger size */}
+          <img
+            src="/logo.png"
+            alt="Drop Me Logo"
+            style={{
+              width: isMobile ? 44 : 64,
+              height: isMobile ? 44 : 64,
+              objectFit: "contain",
+              flexShrink: 0,
+            }}
+          />
 
-            <div style={{ display: "flex", flexDirection: "column", minWidth: 0, overflow: "hidden" }}>
-              <h1
-                style={{
-                  fontSize: isMobile ? "14px" : "18px",
-                  fontWeight: 700,
-                  color: "#111827",
-                  margin: "0 0 2px 0",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {isMobile ? "AI Dashboard" : "AI Engineer Dashboard"}
-              </h1>
-              <span
-                style={{
-                  fontSize: isMobile ? "10px" : "12px",
-                  color: "#9ca3af",
-                  margin: 0,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {isMobile ? "Analytics" : "Real-time Analytics"}
-              </span>
-            </div>
-          </div>
-
-          {/* Status Badge - Hidden on Mobile */}
-          {!isMobile && (
-            <Badge
-              style={{
-                background: "linear-gradient(135deg, #f0fdf4 0%, #f6fff2 100%)",
-                border: `2px solid ${COLORS.PRIMARY}`,
-                color: COLORS.PRIMARY,
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "6px 14px",
-                borderRadius: "20px",
-                fontSize: "12px",
-                fontWeight: 700,
-                marginLeft: "16px",
-                flexShrink: 0,
-                boxShadow: "0 2px 4px rgba(108, 192, 74, 0.1)",
-              }}
-            >
-              <div
-                style={{
-                  width: 8,
-                  height: 8,
-                  background: COLORS.PRIMARY,
-                  borderRadius: "50%",
-                  animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-                }}
-              />
-              <span>LIVE</span>
-            </Badge>
-          )}
+          {/* Date/Time */}
+          <span
+            style={{
+              fontSize: isMobile ? "12px" : "14px",
+              color: "#6b7280",
+              fontWeight: 400,
+              whiteSpace: "nowrap",
+              marginLeft: isMobile ? "4px" : "12px",
+            }}
+          >
+            {formatDateTime(currentDateTime)}
+          </span>
         </div>
 
         {/* RIGHT - Action Buttons */}
@@ -159,71 +114,17 @@ const HeaderResponsive = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod 
           style={{
             display: "flex",
             alignItems: "center",
-            gap: isMobile ? "4px" : "12px",
+            gap: isMobile ? "8px" : "12px",
             flexShrink: 0,
           }}
         >
-          {/* Search Box */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              backgroundColor: "#f3f4f6",
-              borderRadius: "8px",
-              padding: "8px 10px",
-              border: "1px solid #e5e7eb",
-              transition: "all 0.2s ease",
-              width: searchOpen ? (isMobile ? "100px" : "180px") : "0",
-              overflow: "hidden",
-            }}
-          >
-            <Search style={{ width: 16, height: 16, color: "#9ca3af", flexShrink: 0 }} />
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                border: "none",
-                background: "transparent",
-                outline: "none",
-                fontSize: "12px",
-                color: "#111827",
-                width: "100%",
-              }}
-            />
-          </div>
-
-          {/* Search Icon Button */}
-          <button
-            style={{
-              padding: "8px",
-              borderRadius: "8px",
-              backgroundColor: searchOpen ? "#f0fdf4" : "transparent",
-              border: "none",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "all 0.2s ease",
-              flexShrink: 0,
-            }}
-            onClick={() => setSearchOpen(!searchOpen)}
-            title="Search"
-            onMouseEnter={(e) => !searchOpen && (e.currentTarget.style.backgroundColor = "#f3f4f6")}
-            onMouseLeave={(e) => !searchOpen && (e.currentTarget.style.backgroundColor = "transparent")}
-          >
-            <Search style={{ width: 18, height: 18, color: searchOpen ? COLORS.PRIMARY : "#6b7280" }} />
-          </button>
-
           {/* Notification Bell */}
           {!isMobile && (
             <button
               style={{
-                padding: "8px",
-                borderRadius: "8px",
-                backgroundColor: "transparent",
+                padding: "10px",
+                borderRadius: "10px",
+                backgroundColor: "#f3f4f6",
                 border: "none",
                 cursor: "pointer",
                 display: "flex",
@@ -234,66 +135,62 @@ const HeaderResponsive = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod 
                 flexShrink: 0,
               }}
               title="Notifications"
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e5e7eb")}
+              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
             >
               <Bell style={{ width: 18, height: 18, color: "#6b7280" }} />
               <span
                 style={{
                   position: "absolute",
-                  top: "4px",
-                  right: "4px",
+                  top: "6px",
+                  right: "6px",
                   width: "8px",
                   height: "8px",
                   backgroundColor: "#ef4444",
                   borderRadius: "50%",
+                  border: "2px solid white",
                 }}
               />
             </button>
           )}
 
-          {/* Refresh Button - Hidden on Mobile */}
+          {/* Refresh Button */}
           {!isMobile && (
             <button
               onClick={refreshAll}
               style={{
-                padding: "8px 12px",
-                borderRadius: "8px",
-                backgroundColor: "#f9fafb",
-                border: "1px solid #e5e7eb",
+                padding: "10px",
+                borderRadius: "10px",
+                backgroundColor: "#f3f4f6",
+                border: "none",
                 color: "#374151",
-                fontSize: "13px",
-                fontWeight: 600,
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
+                justifyContent: "center",
                 transition: "all 0.2s ease",
                 flexShrink: 0,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#f3f4f6";
-                e.currentTarget.style.borderColor = "#d1d5db";
+                e.currentTarget.style.backgroundColor = "#e5e7eb";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#f9fafb";
-                e.currentTarget.style.borderColor = "#e5e7eb";
+                e.currentTarget.style.backgroundColor = "#f3f4f6";
               }}
               title="Refresh data"
             >
-              <RefreshCcw style={{ width: 16, height: 16 }} />
-              {!isTablet && "Refresh"}
+              <RefreshCcw style={{ width: 18, height: 18 }} />
             </button>
           )}
 
-          {/* Mobile/Tablet Menu Button */}
+          {/* Mobile Menu Button */}
           {isMobile && (
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               style={{
                 padding: "8px",
                 borderRadius: "8px",
-                backgroundColor: mobileMenuOpen ? "#f0fdf4" : "transparent",
+                backgroundColor: mobileMenuOpen ? "#E8F5E9" : "transparent",
                 border: "none",
                 cursor: "pointer",
                 display: "flex",
@@ -303,42 +200,36 @@ const HeaderResponsive = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod 
                 flexShrink: 0,
               }}
               title="More options"
-              onMouseEnter={(e) => !mobileMenuOpen && (e.currentTarget.style.backgroundColor = "#f3f4f6")}
-              onMouseLeave={(e) => !mobileMenuOpen && (e.currentTarget.style.backgroundColor = "transparent")}
             >
               {mobileMenuOpen ? (
-                <X style={{ width: 20, height: 20, color: COLORS.PRIMARY }} />
+                <X style={{ width: 20, height: 20, color: "#4CAF50" }} />
               ) : (
                 <Menu style={{ width: 20, height: 20, color: "#6b7280" }} />
               )}
             </button>
           )}
 
-          {/* Logout Button - Hidden on Mobile */}
+          {/* Logout Button */}
           {!isMobile && (
             <button
               style={{
-                padding: "8px 12px",
-                borderRadius: "8px",
-                backgroundColor: "white",
-                border: "1px solid #e5e7eb",
+                padding: "10px",
+                borderRadius: "10px",
+                backgroundColor: "#FEF2F2",
+                border: "none",
                 color: "#ef4444",
-                fontSize: "13px",
-                fontWeight: 600,
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
+                justifyContent: "center",
                 transition: "all 0.2s ease",
                 flexShrink: 0,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#fef2f2";
-                e.currentTarget.style.borderColor = "#fecaca";
+                e.currentTarget.style.backgroundColor = "#FEE2E2";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "white";
-                e.currentTarget.style.borderColor = "#e5e7eb";
+                e.currentTarget.style.backgroundColor = "#FEF2F2";
               }}
               onClick={() => {
                 localStorage.removeItem("access_token");
@@ -347,8 +238,7 @@ const HeaderResponsive = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod 
               }}
               title="Logout"
             >
-              <LogOut style={{ width: 16, height: 16 }} />
-              {!isTablet && "Logout"}
+              <LogOut style={{ width: 18, height: 18 }} />
             </button>
           )}
         </div>
@@ -361,9 +251,9 @@ const HeaderResponsive = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod 
             display: "flex",
             flexDirection: "column",
             gap: "8px",
-            paddingTop: "8px",
+            paddingTop: "12px",
+            marginTop: "12px",
             borderTop: "1px solid #e5e7eb",
-            marginTop: "8px",
           }}
         >
           <button
@@ -373,51 +263,39 @@ const HeaderResponsive = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod 
             }}
             style={{
               width: "100%",
-              padding: "10px 12px",
-              borderRadius: "8px",
-              backgroundColor: "#f9fafb",
-              border: "1px solid #e5e7eb",
+              padding: "12px",
+              borderRadius: "10px",
+              backgroundColor: "#f3f4f6",
+              border: "none",
               color: "#374151",
-              fontSize: "13px",
-              fontWeight: 600,
+              fontSize: "14px",
+              fontWeight: 500,
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: "8px",
+              gap: "10px",
               transition: "all 0.2s ease",
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#f3f4f6";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#f9fafb";
-            }}
           >
-            <RefreshCcw style={{ width: 16, height: 16 }} />
+            <RefreshCcw style={{ width: 18, height: 18 }} />
             Refresh Data
           </button>
 
           <button
             style={{
               width: "100%",
-              padding: "10px 12px",
-              borderRadius: "8px",
-              backgroundColor: "white",
-              border: "1px solid #e5e7eb",
+              padding: "12px",
+              borderRadius: "10px",
+              backgroundColor: "#FEF2F2",
+              border: "none",
               color: "#ef4444",
-              fontSize: "13px",
-              fontWeight: 600,
+              fontSize: "14px",
+              fontWeight: 500,
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: "8px",
+              gap: "10px",
               transition: "all 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#fef2f2";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "white";
             }}
             onClick={() => {
               localStorage.removeItem("access_token");
@@ -425,156 +303,11 @@ const HeaderResponsive = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod 
               window.location.href = "/login";
             }}
           >
-            <LogOut style={{ width: 16, height: 16 }} />
+            <LogOut style={{ width: 18, height: 18 }} />
             Logout
           </button>
         </div>
       )}
-
-      {/* Secondary Row - Time Period Dropdown */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          paddingLeft: isMobile ? "0px" : "62px",
-          position: "relative",
-          flexWrap: "wrap",
-        }}
-      >
-        {!isMobile && <Clock style={{ width: 18, height: 18, color: "#9ca3af" }} />}
-        <span style={{ fontSize: isMobile ? "12px" : "13px", color: "#6b7280", fontWeight: 600 }}>
-          {isMobile ? "Period:" : "Period:"}
-        </span>
-
-        {/* Dropdown Button */}
-        <div style={{ position: "relative" }}>
-          <button
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            style={{
-              padding: "6px 12px",
-              borderRadius: "8px",
-              border: `1.5px solid ${COLORS.PRIMARY}`,
-              backgroundColor: "#f0fdf4",
-              color: COLORS.PRIMARY,
-              fontSize: isMobile ? "12px" : "13px",
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              transition: "all 0.2s ease",
-              flexShrink: 0,
-            }}
-            onMouseEnter={(e) => {
-              if (!isMobile) {
-                e.currentTarget.style.backgroundColor = "#e8f9e1";
-                e.currentTarget.style.boxShadow = "0 4px 12px rgba(108, 192, 74, 0.2)";
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!isMobile && !dropdownOpen) {
-                e.currentTarget.style.backgroundColor = "#f0fdf4";
-                e.currentTarget.style.boxShadow = "none";
-              }
-            }}
-          >
-            {!isMobile && <Calendar style={{ width: 16, height: 16 }} />}
-            <span>{isMobile ? currentPeriod.split(" ")[0] : currentPeriod}</span>
-            <svg
-              style={{
-                width: 14,
-                height: 14,
-                transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "transform 0.2s ease",
-              }}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </button>
-
-          {/* Dropdown Menu */}
-          {dropdownOpen && (
-            <div
-              style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                marginTop: "8px",
-                backgroundColor: "white",
-                border: "1px solid #e5e7eb",
-                borderRadius: "10px",
-                boxShadow: "0 10px 25px rgba(0, 0, 0, 0.1)",
-                zIndex: 1000,
-                minWidth: "150px",
-                overflow: "hidden",
-              }}
-            >
-              {timePeriods.map((period, index) => (
-                <button
-                  key={period.value}
-                  onClick={() => {
-                    onTimePeriodChange?.(period.value);
-                    setDropdownOpen(false);
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "10px 14px",
-                    border: "none",
-                    backgroundColor: timePeriod === period.value ? "#f0fdf4" : "white",
-                    color: timePeriod === period.value ? COLORS.PRIMARY : "#374151",
-                    fontSize: "12px",
-                    fontWeight: timePeriod === period.value ? 600 : 500,
-                    cursor: "pointer",
-                    textAlign: "left",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    borderBottom: index < timePeriods.length - 1 ? "1px solid #f3f4f6" : "none",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#f9fafb";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor =
-                      timePeriod === period.value ? "#f0fdf4" : "white";
-                  }}
-                >
-                  <Calendar style={{ width: 14, height: 14 }} />
-                  <span>{period.label}</span>
-                  {timePeriod === period.value && (
-                    <span
-                      style={{
-                        marginLeft: "auto",
-                        width: "6px",
-                        height: "6px",
-                        backgroundColor: COLORS.PRIMARY,
-                        borderRadius: "50%",
-                      }}
-                    />
-                  )}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Pulse Animation */}
-      <style>{`
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.5;
-          }
-        }
-      `}</style>
     </header>
   );
 };

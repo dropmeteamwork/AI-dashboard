@@ -14,27 +14,28 @@ body {
   font-family: "outlit", sans-serif;
 }
 
-/* Custom Theme Colors */
+/* Custom Theme Colors - Matching RVM Dashboard */
 :root {
-  --color-primary: #B1D98E;            /* updated brand green */
-  --color-secondary: #f3f8eba3;
-  --color-accent: #84CC16;
+  --color-primary: #4CAF50;            /* Green matching RVM */
+  --color-secondary: #f8fafb;
+  --color-accent: #81C784;
   --color-shade-grey: #F8F8F8;
-  --color-text-primary: #0A0A0A;
-  --color-text-secondary: #737373;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6b7280;
   --color-border: #E4E4E4;
   --color-bg: #FFFFFF;
   --color-error: #EF4444;
 
-  /* Chart Colors — switched to brand green */
-  --color-chart-line: #B1D98E;
-  --color-chart-bar: #B1D98E;
-  --color-chart-pie: #B1D98E;
+  /* Chart Colors — matching RVM Dashboard */
+  --color-chart-line: #4CAF50;
+  --color-chart-bar: #4CAF50;
+  --color-chart-pie: #8B5CF6;
+  --color-chart-purple: #8B5CF6;
 }
 
-/* Custom Shadows */
+/* Custom Shadows - Clean and subtle */
 .shadow-custom {
-  box-shadow: 0px 1px 2px -1px #0000001A, 0px 1px 3px 0px #0000001A !important;
+  box-shadow: 0px 1px 2px -1px rgba(0,0,0,0.1), 0px 1px 3px 0px rgba(0,0,0,0.1) !important;
 }
 
 /* Global Chart Styles */
@@ -52,9 +53,9 @@ body {
   background: var(--color-bg);
   color: var(--color-text-primary);
   border: 1px solid var(--color-border);
-  box-shadow: 0px 1px 2px -1px #0000001A, 0px 1px 3px 0px #0000001A;
-  border-radius: 8px;
-  padding: 0.5rem;
+  box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  padding: 0.75rem;
 }
 
 .recharts-legend-item text {
@@ -81,4 +82,258 @@ body {
 
 .border-primary-color {
   border-color: var(--color-primary) !important;
+}
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+
+/* Responsive container */
+.responsive-container {
+  width: 100%;
+  max-width: 100%;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 640px) {
+  .responsive-container {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+/* Responsive grid layouts */
+.responsive-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .responsive-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .responsive-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Chart container - ensures proper scaling */
+.chart-container {
+  width: 100%;
+  height: 300px;
+}
+
+@media (max-width: 640px) {
+  .chart-container {
+    height: 250px;
+  }
+}
+
+/* Main content responsive padding */
+.main-content {
+  padding: 12px;
+}
+
+@media (min-width: 640px) {
+  .main-content {
+    padding: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  .main-content {
+    padding: 24px;
+  }
+}
+
+/* Hide on mobile */
+@media (max-width: 639px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
+
+/* Hide on desktop */
+@media (min-width: 640px) {
+  .hide-desktop {
+    display: none !important;
+  }
+}
+
+/* Responsive text sizes */
+.text-responsive-sm {
+  font-size: 12px;
+}
+
+.text-responsive-md {
+  font-size: 14px;
+}
+
+.text-responsive-lg {
+  font-size: 16px;
+}
+
+.text-responsive-xl {
+  font-size: 18px;
+}
+
+@media (min-width: 640px) {
+  .text-responsive-sm {
+    font-size: 13px;
+  }
+  .text-responsive-md {
+    font-size: 15px;
+  }
+  .text-responsive-lg {
+    font-size: 18px;
+  }
+  .text-responsive-xl {
+    font-size: 22px;
+  }
+}
+
+/* Responsive card padding */
+.card-responsive {
+  padding: 14px;
+  border-radius: 12px;
+}
+
+@media (min-width: 640px) {
+  .card-responsive {
+    padding: 20px;
+    border-radius: 16px;
+  }
+}
+
+/* Responsive flex wrap */
+.flex-responsive {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .flex-responsive {
+    flex-direction: row;
+    gap: 16px;
+  }
+}
+
+/* Scroll container for mobile */
+.scroll-x-mobile {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 768px) {
+  .scroll-x-mobile {
+    overflow-x: visible;
+  }
+}
+
+/* Chart responsive tweaks */
+@media (max-width: 640px) {
+  .recharts-wrapper {
+    font-size: 11px !important;
+  }
+  
+  .recharts-cartesian-axis-tick text {
+    font-size: 10px !important;
+  }
+  
+  .recharts-legend-item text {
+    font-size: 11px !important;
+  }
+  
+  .recharts-tooltip-wrapper {
+    max-width: 200px !important;
+  }
+}
+
+/* Responsive KPI grid */
+.kpi-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (min-width: 640px) {
+  .kpi-grid {
+    gap: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .kpi-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .kpi-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Charts two column layout */
+.charts-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+  .charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+}
+
+/* Cards list responsive */
+.cards-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (min-width: 640px) {
+  .cards-grid {
+    gap: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  .cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .cards-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Smooth transitions */
+* {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }

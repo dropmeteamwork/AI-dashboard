@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { MachinesPerformanceChart, MachinesStatusList, MachinesKPIs } from "@/components/charts/MachineCharts";
 import { Loader2, AlertCircle, Server, FileDown } from "lucide-react";
 import { exportToCSV } from "@/utils/exportCsv";
@@ -82,10 +80,10 @@ const MachinesTab = ({ data = null }) => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-green-600" />
-          <p className="text-gray-600">Loading machine data...</p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "400px" }}>
+        <div style={{ textAlign: "center" }}>
+          <Loader2 style={{ width: 32, height: 32, color: "#8B5CF6", margin: "0 auto 8px", animation: "spin 1s linear infinite" }} />
+          <p style={{ color: "#6b7280", fontFamily: "'Outfit', sans-serif" }}>Loading machine data...</p>
         </div>
       </div>
     );
@@ -93,11 +91,11 @@ const MachinesTab = ({ data = null }) => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <AlertCircle className="h-12 w-12 text-red-600 mx-auto mb-2" />
-          <p className="text-gray-900 font-semibold">Failed to load machines</p>
-          <p className="text-sm text-gray-600">{error.message}</p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "400px" }}>
+        <div style={{ textAlign: "center" }}>
+          <AlertCircle style={{ width: 48, height: 48, color: "#EF4444", margin: "0 auto 8px" }} />
+          <p style={{ color: "#111827", fontWeight: "600", fontFamily: "'Outfit', sans-serif" }}>Failed to load machines</p>
+          <p style={{ fontSize: "14px", color: "#6b7280" }}>{error.message}</p>
         </div>
       </div>
     );
@@ -117,25 +115,23 @@ const MachinesTab = ({ data = null }) => {
   // Check if no machines available
   if (machines.length === 0 && !loading && !error) {
     return (
-      <div className="w-full">
-        <div className="machines-header mb-8 pb-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Server className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900">Machine Monitoring</h2>
-                <p className="text-gray-600 text-sm">Track and monitor all connected machines and their performance</p>
-              </div>
+      <div style={{ width: "100%" }}>
+        <div style={{ marginBottom: "32px", paddingBottom: "24px", borderBottom: "1px solid #E5E7EB" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "12px" }}>
+            <div style={{ padding: "8px", background: "linear-gradient(135deg, #F3E8FF 0%, #EDE9FE 100%)", borderRadius: "12px" }}>
+              <Server style={{ width: 24, height: 24, color: "#8B5CF6" }} />
+            </div>
+            <div>
+              <h2 style={{ fontSize: "24px", fontWeight: "700", color: "#111827", fontFamily: "'Outfit', sans-serif" }}>Machine Monitoring</h2>
+              <p style={{ color: "#6b7280", fontSize: "14px" }}>Track and monitor all connected machines and their performance</p>
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-center h-96">
-          <div className="text-center">
-            <Server className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-            <p className="text-gray-600 font-semibold">No machines available</p>
-            <p className="text-sm text-gray-500 mt-1">No connected machines found</p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "400px" }}>
+          <div style={{ textAlign: "center" }}>
+            <Server style={{ width: 48, height: 48, color: "#9ca3af", margin: "0 auto 8px" }} />
+            <p style={{ color: "#6b7280", fontWeight: "600", fontFamily: "'Outfit', sans-serif" }}>No machines available</p>
+            <p style={{ fontSize: "14px", color: "#9ca3af", marginTop: "4px" }}>No connected machines found</p>
           </div>
         </div>
       </div>
@@ -143,57 +139,75 @@ const MachinesTab = ({ data = null }) => {
   }
 
   return (
-    <div className="w-full">
+    <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: "24px" }}>
       {/* Header Section */}
-      <div className="machines-header mb-8 pb-6 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Server className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="text-3xl font-bold text-gray-900">Machine Monitoring</h2>
-              <p className="text-gray-600 text-sm">Track and monitor all connected machines and their performance</p>
-            </div>
-          </div>
-          <Button
-            onClick={handleExportCSV}
-            className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
-          >
-            <FileDown className="h-4 w-4" />
-            Export CSV
-          </Button>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div>
+          <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#111827", fontFamily: "'Outfit', sans-serif" }}>Machine Monitoring</h2>
+          <p style={{ color: "#6b7280", fontSize: "14px", marginTop: "4px" }}>Track and monitor all connected machines</p>
         </div>
+        <button
+          onClick={handleExportCSV}
+          style={{
+            backgroundColor: "#4CAF50",
+            color: "white",
+            borderRadius: "12px",
+            padding: "10px 20px",
+            fontSize: "14px",
+            fontWeight: "500",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "'Outfit', sans-serif",
+          }}
+        >
+          <FileDown style={{ width: 16, height: 16 }} />
+          Export CSV
+        </button>
       </div>
 
       {/* KPIs Section */}
       {machines.length > 0 && (
-        <div className="mb-8">
-          <MachinesKPIs data={machines} />
-        </div>
+        <MachinesKPIs data={machines} />
       )}
 
       {/* Performance Chart Section */}
-      <div className="mb-8 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-        <div className="p-6 border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900">Performance Overview</h3>
-          <p className="text-sm text-gray-500 mt-1">Machine performance metrics and trends</p>
+      <div 
+        style={{
+          background: "white",
+          border: "1px solid #E5E7EB",
+          borderRadius: "16px",
+          fontFamily: "'Outfit', sans-serif",
+        }}
+      >
+        <div style={{ padding: "20px 24px", borderBottom: "1px solid #F3F4F6" }}>
+          <h3 style={{ fontSize: "18px", fontWeight: "600", color: "#111827" }}>Performance Overview</h3>
+          <p style={{ fontSize: "14px", color: "#6b7280", marginTop: "4px" }}>Machine performance metrics and trends</p>
         </div>
-        <div className="p-6">
-          <div style={{ minHeight: 600 }} className="w-full">
+        <div style={{ padding: "24px" }}>
+          <div style={{ minHeight: 500, width: "100%" }}>
             <MachinesPerformanceChart data={machines} />
           </div>
         </div>
       </div>
 
       {/* Status List Section */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-        <div className="p-6 border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-900">Machine Status</h3>
-          <p className="text-sm text-gray-500 mt-1">Current status of all connected machines</p>
+      <div 
+        style={{
+          background: "white",
+          border: "1px solid #E5E7EB",
+          borderRadius: "16px",
+          fontFamily: "'Outfit', sans-serif",
+        }}
+      >
+        <div style={{ padding: "20px 24px", borderBottom: "1px solid #F3F4F6" }}>
+          <h3 style={{ fontSize: "18px", fontWeight: "600", color: "#111827" }}>Machine Status</h3>
+          <p style={{ fontSize: "14px", color: "#6b7280", marginTop: "4px" }}>Current status of all connected machines</p>
         </div>
-        <div className="p-6">
-          <div className="overflow-x-auto">
+        <div style={{ padding: "24px" }}>
+          <div style={{ overflowX: "auto" }}>
             <MachinesStatusList data={machines} />
           </div>
         </div>

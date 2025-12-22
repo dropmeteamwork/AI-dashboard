@@ -109,8 +109,8 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
       return (
         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
           <p className="text-sm font-semibold text-gray-900">{data.day}</p>
-          <p className="text-xs text-blue-600">Confidence: {data.avg_confidence.toFixed(1)}%</p>
-          {data.accuracy > 0 && <p className="text-xs text-purple-600">Accuracy: {data.accuracy.toFixed(1)}%</p>}
+          <p className="text-xs text-green-700">Confidence: {data.avg_confidence.toFixed(1)}%</p>
+          {data.accuracy > 0 && <p className="text-xs text-green-600">Accuracy: {data.accuracy.toFixed(1)}%</p>}
           {data.precision > 0 && <p className="text-xs text-emerald-600">Precision: {data.precision.toFixed(1)}%</p>}
           {data.recall > 0 && <p className="text-xs text-orange-600">Recall: {data.recall.toFixed(1)}%</p>}
         </div>
@@ -169,10 +169,10 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
           <Line
             type="natural"
             dataKey="avg_confidence"
-            stroke="#2563EB"
+            stroke="#4CAF50"
             strokeWidth={3}
-            dot={{ fill: "#2563EB", r: 4 }}
-            activeDot={{ r: 6, fill: "#1d4ed8" }}
+            dot={{ fill: "#4CAF50", r: 4 }}
+            activeDot={{ r: 6, fill: "#2E7D32" }}
             name="Avg Confidence (%)"
             isAnimationActive={true}
           />
@@ -180,7 +180,7 @@ export const ModelPerformanceChart = ({ days = 30 }) => {
             <Line
               type="natural"
               dataKey="accuracy"
-              stroke="#8B5CF6"
+              stroke="#81C784"
               strokeWidth={2}
               dot={false}
               strokeDasharray="5 5"
@@ -216,7 +216,7 @@ export const ModelsConfidenceChart = () => {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
-          <div className="animate-spin h-8 w-8 border-4 border-purple-200 border-t-purple-600 rounded-full mx-auto mb-2"></div>
+          <div className="animate-spin h-8 w-8 border-4 border-green-200 border-t-green-600 rounded-full mx-auto mb-2"></div>
           <p className="text-sm text-gray-600">Loading model data…</p>
         </div>
       </div>
@@ -243,9 +243,9 @@ export const ModelsConfidenceChart = () => {
 
   const getConfidenceColor = (confidence) => {
     if (confidence >= 90) return COLORS.PRIMARY; // green
-    if (confidence >= 75) return "#3b82f6"; // blue
-    if (confidence >= 60) return "#f59e0b"; // amber
-    return "#ef4444"; // red
+    if (confidence >= 75) return "#66BB6A"; // light green
+    if (confidence >= 60) return "#81C784"; // lighter green
+    return "#A5D6A7"; // pale green
   };
 
   const CustomBar = (props) => {
@@ -270,9 +270,9 @@ export const ModelsConfidenceChart = () => {
       return (
         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
           <p className="text-sm font-semibold text-gray-900">{data.model}</p>
-          <p className="text-xs text-purple-600">Confidence: {data.avg_confidence.toFixed(1)}%</p>
+          <p className="text-xs text-green-600">Confidence: {data.avg_confidence.toFixed(1)}%</p>
           <p className="text-xs text-gray-600">Predictions: {data.count.toLocaleString()}</p>
-          {data.accuracy > 0 && <p className="text-xs text-blue-600">Accuracy: {data.accuracy.toFixed(1)}%</p>}
+          {data.accuracy > 0 && <p className="text-xs text-green-700">Accuracy: {data.accuracy.toFixed(1)}%</p>}
         </div>
       );
     }
@@ -283,11 +283,11 @@ export const ModelsConfidenceChart = () => {
     <div className="space-y-4">
       {/* Top Model Stats */}
       {topModel && (
-        <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border border-purple-200">
+        <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
           <p className="text-xs text-gray-600 mb-1">Top Performing Model</p>
-          <p className="text-lg font-bold text-purple-700">{topModel.model}</p>
+          <p className="text-lg font-bold text-green-700">{topModel.model}</p>
           <p className="text-sm text-gray-600 mt-2">
-            Confidence: <span className="font-semibold text-purple-600">{topModel.avg_confidence.toFixed(1)}%</span> • 
+            Confidence: <span className="font-semibold text-green-600">{topModel.avg_confidence.toFixed(1)}%</span> • 
             Predictions: <span className="font-semibold text-gray-700">{topModel.count.toLocaleString()}</span>
           </p>
         </div>

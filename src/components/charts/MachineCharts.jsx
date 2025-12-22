@@ -16,13 +16,20 @@ import {
   ResponsiveContainer as RespContainer
 } from "recharts";
 
-// Custom tooltip for better visualization
+// Custom tooltip matching RVM style
 const CustomTooltip = ({ active, payload }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-3 border border-gray-300 rounded shadow-lg">
+      <div style={{
+        background: "white",
+        padding: "12px 16px",
+        border: "1px solid #E5E7EB",
+        borderRadius: "12px",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+        fontFamily: "'Outfit', sans-serif",
+      }}>
         {payload.map((entry, index) => (
-          <p key={index} style={{ color: entry.color }} className="font-semibold">
+          <p key={index} style={{ color: entry.color, fontWeight: "600", fontSize: "14px", margin: "4px 0" }}>
             {entry.name}: {entry.value}
           </p>
         ))}
@@ -44,28 +51,29 @@ export const MachinesPerformanceChart = ({ data = [] }) => {
     acceptanceRate: m.total > 0 ? Math.round((m.accepted / m.total) * 100) : 0,
   }));
 
-  if (!chartData.length) return <div className="p-4 text-gray-500">No machine data</div>;
+  if (!chartData.length) return <div style={{ padding: "16px", color: "#6b7280", fontFamily: "'Outfit', sans-serif" }}>No machine data</div>;
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
       {/* Stacked Bar Chart - Total breakdown */}
       <div>
-        <h4 className="text-sm font-semibold text-gray-700 mb-3">Production Breakdown</h4>
+        <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "12px", fontFamily: "'Outfit', sans-serif" }}>Production Breakdown</h4>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
             <XAxis 
               dataKey="machine" 
               interval={0} 
               angle={-45} 
               textAnchor="end" 
               height={80}
-              style={{ fontSize: "12px" }}
+              tick={{ fontSize: 12, fontFamily: "'Outfit', sans-serif" }}
+              stroke="#6b7280"
             />
-            <YAxis />
+            <YAxis tick={{ fontSize: 12, fontFamily: "'Outfit', sans-serif" }} stroke="#6b7280" />
             <Tooltip content={<CustomTooltip />} />
-            <Legend />
-            <Bar dataKey="accepted" fill="#10B981" name="Accepted" radius={[8, 8, 0, 0]} />
+            <Legend wrapperStyle={{ fontFamily: "'Outfit', sans-serif" }} />
+            <Bar dataKey="accepted" fill="#4CAF50" name="Accepted" radius={[8, 8, 0, 0]} />
             <Bar dataKey="rejected" fill="#EF4444" name="Rejected" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -73,27 +81,28 @@ export const MachinesPerformanceChart = ({ data = [] }) => {
 
       {/* Acceptance Rate Line Chart */}
       <div>
-        <h4 className="text-sm font-semibold text-gray-700 mb-3">Acceptance Rate (%)</h4>
+        <h4 style={{ fontSize: "14px", fontWeight: "600", color: "#374151", marginBottom: "12px", fontFamily: "'Outfit', sans-serif" }}>Acceptance Rate (%)</h4>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
             <XAxis 
               dataKey="machine" 
               angle={-45} 
               textAnchor="end" 
               height={80}
-              style={{ fontSize: "12px" }}
+              tick={{ fontSize: 12, fontFamily: "'Outfit', sans-serif" }}
+              stroke="#6b7280"
             />
-            <YAxis domain={[0, 100]} />
+            <YAxis domain={[0, 100]} tick={{ fontSize: 12, fontFamily: "'Outfit', sans-serif" }} stroke="#6b7280" />
             <Tooltip 
               content={<CustomTooltip />}
               formatter={(value) => `${value}%`}
             />
-            <Bar dataKey="acceptanceRate" fill="#8B5CF6" name="Acceptance Rate" radius={[8, 8, 0, 0]}>
+            <Bar dataKey="acceptanceRate" fill="#0EA5E9" name="Acceptance Rate" radius={[8, 8, 0, 0]}>
               {chartData.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
-                  fill={entry.acceptanceRate >= 70 ? "#10B981" : entry.acceptanceRate >= 50 ? "#F59E0B" : "#EF4444"}
+                  fill={entry.acceptanceRate >= 70 ? "#4CAF50" : entry.acceptanceRate >= 50 ? "#F97316" : "#EF4444"}
                 />
               ))}
             </Bar>
@@ -191,7 +200,7 @@ export const MachinesStatusList = ({ data = [] }) => {
 };
 
 // -----------------------------------------------------
-// KPIs - Enhanced with better styling
+// KPIs - RVM Dashboard Style with Gradients
 // -----------------------------------------------------
 export const MachinesKPIs = ({ data = [] }) => {
   const totalMachines = data.length;
@@ -205,47 +214,54 @@ export const MachinesKPIs = ({ data = [] }) => {
     {
       label: "Total Machines",
       value: totalMachines,
-      color: "bg-blue-50",
-      textColor: "text-blue-600",
-      borderColor: "border-blue-200"
+      gradient: "linear-gradient(135deg, #E0F2FE 0%, #DBEAFE 100%)",
+      borderColor: "#93C5FD",
+      valueColor: "#3B82F6",
     },
     {
       label: "Online Status",
       value: `${onlineMachines}/${totalMachines}`,
-      color: "bg-green-50",
-      textColor: "text-green-600",
-      borderColor: "border-green-200"
+      gradient: "linear-gradient(135deg, #DCFCE7 0%, #D1FAE5 100%)",
+      borderColor: "#86EFAC",
+      valueColor: "#4CAF50",
     },
     {
       label: "Total Collected",
       value: totalCollected.toLocaleString(),
-      color: "bg-purple-50",
-      textColor: "text-purple-600",
-      borderColor: "border-purple-200"
+      gradient: "linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%)",
+      borderColor: "#7DD3FC",
+      valueColor: "#0EA5E9",
+      extra: `✓ ${totalAccepted.toLocaleString()} | ✗ ${totalRejected.toLocaleString()}`
     },
     {
       label: "Acceptance Rate",
       value: `${acceptanceRate}%`,
-      color: "bg-amber-50",
-      textColor: "text-amber-600",
-      borderColor: "border-amber-200"
+      gradient: "linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%)",
+      borderColor: "#FDBA74",
+      valueColor: "#F97316",
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px" }}>
       {kpis.map((kpi, idx) => (
         <div 
           key={idx}
-          className={`${kpi.color} ${kpi.borderColor} border rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow`}
+          style={{
+            background: kpi.gradient,
+            border: `1px solid ${kpi.borderColor}`,
+            borderRadius: "16px",
+            padding: "20px 24px",
+            fontFamily: "'Outfit', sans-serif",
+          }}
         >
-          <div className="text-gray-600 text-sm font-medium mb-2">{kpi.label}</div>
-          <div className={`${kpi.textColor} text-3xl font-bold`}>{kpi.value}</div>
+          <div style={{ color: "#374151", fontSize: "14px", fontWeight: "500", marginBottom: "12px" }}>{kpi.label}</div>
+          <div style={{ color: kpi.valueColor, fontSize: "32px", fontWeight: "700" }}>{kpi.value}</div>
           
           {/* Additional stats */}
-          {idx === 2 && (
-            <div className="text-xs text-gray-500 mt-2">
-              ✓ {totalAccepted.toLocaleString()} | ✗ {totalRejected.toLocaleString()}
+          {kpi.extra && (
+            <div style={{ fontSize: "12px", color: "#6b7280", marginTop: "8px" }}>
+              {kpi.extra}
             </div>
           )}
         </div>

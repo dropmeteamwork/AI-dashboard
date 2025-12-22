@@ -3,17 +3,12 @@ import { useEffect, useState, useMemo } from "react";
 import Header from "./HeaderResponsive";
 import Sidebar from "./Sidebar";
 import OverviewTab from "./tabs/OverviewTab";
-import MachinesTab from "./tabs/MachinesTab";
 import PredictionsTab from "./tabs/PredictionsTab";
-import ModelsTab from "./tabs/ModelsTab";
 import AnalyticsTab from "./tabs/AnalyticsTab";
 import FlagsTab from "./tabs/FlagsTab";
-import BrandInsightsTab from "./tabs/BrandInsightsTab";
 import BrandsTab from "./tabs/BrandsTab";
-import BrandsPrediction from "./tabs/BrandsPrediction";
+import BrandsAnalyticsTab from "./tabs/BrandsAnalyticsTab";
 import ReportTab from "./tabs/ReportTab";
-import FlaggedItemsTab from "./tabs/FlaggedItemsTab";
-import AdminTab from "./tabs/AdminTab";
 import { filterAnalyticsDataByPeriod, recalculateOverview } from "@/utils/dateFilter";
 
 
@@ -188,16 +183,13 @@ const Dashboard = () => {
         />
 
         {/* Main content */}
-        <main className="flex-1 overflow-auto" style={{ padding: "24px", backgroundColor: "#f8fafb" }}>
+        <main className="flex-1 overflow-auto main-content" style={{ backgroundColor: "#f8fafb" }}>
           {activeTab === "overview" && (
-            <OverviewTab overview={filteredOverview} topModel={topModel} />
+            <OverviewTab overview={filteredOverview} topModel={topModel} machines={machines} />
           )}
-          {activeTab === "machines" && <MachinesTab data={machines} />}
           {activeTab === "predictions" && <PredictionsTab />}
           {activeTab === "flags" && <FlagsTab flagFrequency={flagFrequency} />}
-          {activeTab === "flagged_items" && <FlaggedItemsTab />}
 
-          {activeTab === "models" && <ModelsTab />}
           {activeTab === "analytics" && (
             <AnalyticsTab
               accuracyByClass={accuracyByClass}
@@ -209,9 +201,6 @@ const Dashboard = () => {
               histogram={histogram}
             />
           )}
-          {activeTab === "brand_insights" && (
-            <BrandInsightsTab brandsSummary={brandsSummary} />
-          )}
           {activeTab === "brands" && (
             <BrandsTab
               brandsSummary={brandsSummary}
@@ -221,12 +210,7 @@ const Dashboard = () => {
               setSelectedBrand={setSelectedBrand}
             />
           )}
-          {activeTab === "brand_predictions" && (
-            <BrandsPrediction
-              selectedBrand={selectedBrand}
-              setSelectedBrand={setSelectedBrand}
-            />
-          )}
+          {activeTab === "brands_analytics" && <BrandsAnalyticsTab />}
 
           {activeTab === "report" && (
             <ReportTab
@@ -242,9 +226,6 @@ const Dashboard = () => {
               machines={machines}
             />
           )}
-          {activeTab === "admins" && <AdminTab />}
-
-
         </main>
       </div>
     </div>

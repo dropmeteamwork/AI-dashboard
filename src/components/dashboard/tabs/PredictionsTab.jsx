@@ -211,13 +211,13 @@ const PredictionsTab = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-6">
+    <div className="space-y-4">
+      {/* Header - Responsive */}
+      <div className="flex flex-col sm:flex-row justify-between items-start gap-4 mb-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Predictions</h2>
-          <p className="text-gray-600">
-            Showing {predictions.length} of {totalCount.toLocaleString()} predictions • Page {currentPage} of {totalPages}
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Predictions</h2>
+          <p className="text-sm text-gray-600">
+            Showing {predictions.length} of {totalCount.toLocaleString()} • Page {currentPage}/{totalPages}
           </p>
         </div>
         <Button
@@ -247,15 +247,15 @@ const PredictionsTab = () => {
         </div>
       )}
 
-      {/* Filters */}
-      <Card className="p-6 border border-gray-200">
+      {/* Filters - Responsive */}
+      <Card className="p-4 sm:p-6 border border-gray-200">
         <div className="space-y-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Filter className="h-5 w-5 text-gray-600" />
-            <h3 className="font-semibold text-gray-900">Filters</h3>
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="h-4 w-4 text-gray-600" />
+            <h3 className="font-semibold text-gray-900 text-sm">Filters</h3>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -316,26 +316,26 @@ const PredictionsTab = () => {
         </div>
       </Card>
 
-      {/* Predictions Table */}
+      {/* Predictions Table - Responsive with horizontal scroll */}
       <Card className="border border-gray-200 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+        <div className="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <h3 className="font-semibold text-gray-900">Predictions ({filteredPredictions.length})</h3>
-            <p className="text-sm text-gray-600 mt-1">
-              Page {currentPage} of {totalPages} • {totalCount.toLocaleString()} total
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Predictions ({filteredPredictions.length})</h3>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              Page {currentPage} / {totalPages} • {totalCount.toLocaleString()} total
             </p>
           </div>
           <Button
             onClick={exportPredictions}
-            className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+            className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 text-sm"
           >
             <Download className="h-4 w-4" />
-            Export CSV
+            Export
           </Button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto scroll-x-mobile">
+          <table className="w-full text-sm min-w-[800px]">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">ID</th>

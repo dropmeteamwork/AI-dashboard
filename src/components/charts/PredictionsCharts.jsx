@@ -15,14 +15,15 @@ import {
   Line,
 } from "recharts";
 
-// FRIENDS GREEN PALETTE
+// App Logo Green Theme Palette
 const themeColors = {
   primary: "#4CAF50",
   primaryDark: "#388E3C",
   primaryLight: "#81C784",
   accent: "#A5D6A7",
   soft: "#C8E6C9",
-  danger: "#EF5350",
+  danger: "#2E7D32",
+  purple: "#66BB6A",
 };
 
 // GLOBAL BACKEND URL

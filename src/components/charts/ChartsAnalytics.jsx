@@ -1,4 +1,4 @@
-// ChartsAnalytics.jsx
+// ChartsAnalytics.jsx - Matching RVM Dashboard Style
 import React from "react";
 import {
   ResponsiveContainer,
@@ -26,36 +26,44 @@ import {
   Scatter,
 } from "recharts";
 
-/* Palette from your screenshot */
+/* Palette - Natural colors without purple */
 const COLORS = [
-  "#6CC04A",
-  "#7DCA64",
-  "#8ED47D",
-  "#9EDD97",
-  "#AEE7B0",
-  "#BEF1CA",
-  "#CEFAE3",
-  "#DEFFE0",
-  "#EEFFED",
+  "#0EA5E9", // Ocean Blue
+  "#4CAF50", // Green
+  "#F97316", // Coral/Orange
+  "#14B8A6", // Teal
+  "#EF4444", // Red
+  "#D97706", // Sand/Amber
+  "#059669", // Forest/Emerald
+  "#0891B2", // Cyan
+  "#EA580C", // Deep Coral
 ];
 
-const GREEN = "#6CC04A";
-const DARK_GREEN = "#5BA63E";
-const GREEN_GRID = "#6CC04A22";
-const AXIS = "#2d2d2d";
-const RED = "#ef4444";
-const BLUE = "#3b82f6";
+const GREEN = "#4CAF50";
+const DARK_GREEN = "#2E7D32";
+const GREEN_GRID = "#E5E7EB";
+const AXIS = "#6b7280";
+const OCEAN_BLUE = "#0EA5E9";
+const CORAL = "#F97316";
+const BLUE = "#0EA5E9";
 
-/* Enhanced tooltip with better styling */
+/* Enhanced tooltip with RVM styling */
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
   return (
-    <div className="p-3 rounded-lg shadow-lg bg-white border border-gray-200 text-sm">
-      <div className="font-bold text-gray-900 mb-2">{label}</div>
+    <div style={{
+      padding: "12px 16px",
+      borderRadius: "12px",
+      background: "white",
+      border: "1px solid #E5E7EB",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+      fontFamily: "'Outfit', sans-serif",
+    }}>
+      <div style={{ fontWeight: "600", color: "#111827", marginBottom: "8px" }}>{label}</div>
       {payload.map((p, i) => (
-        <div key={i} className="flex items-center gap-2 text-gray-700">
-          <div style={{ width: 10, height: 10, background: p.color, borderRadius: "2px" }} />
-          <div>{p.name}: <span className="font-semibold">{typeof p.value === 'number' ? p.value.toLocaleString() : p.value}</span></div>
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px", color: "#374151", fontSize: "14px", marginBottom: "4px" }}>
+          <div style={{ width: 10, height: 10, background: p.color, borderRadius: "4px" }} />
+          <div>{p.name}: <span style={{ fontWeight: "600" }}>{typeof p.value === 'number' ? p.value.toLocaleString() : p.value}</span></div>
         </div>
       ))}
     </div>
@@ -74,7 +82,7 @@ export const AccuracyByClassChart = ({ data = [] }) => {
     accuracy: d.total > 0 ? ((d.accepted || 0) / d.total * 100).toFixed(1) : 0,
   })).sort((a, b) => b.total - a.total);
 
-  if (!chartData.length) return <div className="p-4 text-gray-500">No classification data available</div>;
+  if (!chartData.length) return <div style={{ padding: "16px", color: "#6b7280", fontFamily: "'Outfit', sans-serif" }}>No classification data available</div>;
 
   return (
     <ResponsiveContainer width="100%" height={320}>
@@ -82,18 +90,18 @@ export const AccuracyByClassChart = ({ data = [] }) => {
         <defs>
           <linearGradient id="acceptedGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={GREEN} stopOpacity={0.9} />
-            <stop offset="100%" stopColor={DARK_GREEN} stopOpacity={0.7} />
+            <stop offset="100%" stopColor={GREEN} stopOpacity={0.6} />
           </linearGradient>
           <linearGradient id="rejectedGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={RED} stopOpacity={0.9} />
-            <stop offset="100%" stopColor="#dc2626" stopOpacity={0.7} />
+            <stop offset="0%" stopColor="#EF4444" stopOpacity={0.9} />
+            <stop offset="100%" stopColor="#EF4444" stopOpacity={0.6} />
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke={GREEN_GRID} vertical={false} />
-        <XAxis dataKey="item" stroke={AXIS} tick={{ fontSize: 11 }} angle={-45} textAnchor="end" height={80} />
-        <YAxis stroke={AXIS} tick={{ fontSize: 12 }} />
+        <XAxis dataKey="item" stroke={AXIS} tick={{ fontSize: 11, fontFamily: "'Outfit', sans-serif" }} angle={-45} textAnchor="end" height={80} />
+        <YAxis stroke={AXIS} tick={{ fontSize: 12, fontFamily: "'Outfit', sans-serif" }} />
         <Tooltip content={<CustomTooltip />} />
-        <Legend wrapperStyle={{ paddingTop: "20px" }} />
+        <Legend wrapperStyle={{ paddingTop: "20px", fontFamily: "'Outfit', sans-serif" }} />
         <Bar dataKey="accepted" stackId="a" name="✓ Accepted" fill="url(#acceptedGrad)" radius={[6, 6, 0, 0]} />
         <Bar dataKey="rejected" stackId="a" name="✗ Rejected" fill="url(#rejectedGrad)" radius={[6, 6, 0, 0]} />
         <Line type="monotone" dataKey="accuracy" stroke={BLUE} strokeWidth={2} name="Accuracy %" dot={{ r: 4 }} yAxisId="right" />
@@ -104,53 +112,53 @@ export const AccuracyByClassChart = ({ data = [] }) => {
 };
 
 /* -------------------------------------------------------------------------- */
-/* Avg Confidence By Item — enhanced with gradient colors and trends         */
+/* Avg Confidence By Item — Ocean Blue bars                                   */
 /* -------------------------------------------------------------------------- */
 export const AvgConfidenceByItemChart = ({ data = [] }) => {
   const chartData = (data || [])
     .map((d) => ({
       item: d.item || "Unknown",
       avg_conf: Math.min(100, Math.max(0, (d.avg_conf ?? d.avg_confidence ?? 0) * 100)),
-      status: (d.avg_conf ?? d.avg_confidence ?? 0) * 100 >= 80 ? "High" : 
-              (d.avg_conf ?? d.avg_confidence ?? 0) * 100 >= 60 ? "Good" : "Low",
     }))
     .sort((a, b) => b.avg_conf - a.avg_conf);
 
-  if (!chartData.length) return <div className="p-4 text-gray-500">No confidence data available</div>;
-
-  // Color based on confidence level
-  const getColor = (value) => {
-    if (value >= 80) return "#6CC04A"; // bright green
-    if (value >= 60) return "#8ED47D"; // light green
-    if (value >= 40) return "#eab308"; // yellow-500
-    return "#ef4444"; // red-500
-  };
+  if (!chartData.length) return <div style={{ padding: "16px", color: "#6b7280", fontFamily: "'Outfit', sans-serif" }}>No confidence data available</div>;
 
   return (
     <ResponsiveContainer width="100%" height={320}>
       <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
-        <defs>
-          <linearGradient id="confGrad1" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#6CC04A" stopOpacity={0.9} />
-            <stop offset="100%" stopColor="#5BA63E" stopOpacity={0.7} />
-          </linearGradient>
-          <linearGradient id="confGrad2" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#84cc16" stopOpacity={0.9} />
-            <stop offset="100%" stopColor="#65a30d" stopOpacity={0.7} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke={GREEN_GRID} vertical={false} />
-        <XAxis dataKey="item" stroke={AXIS} tick={{ fontSize: 11 }} angle={-45} textAnchor="end" height={80} />
-        <YAxis stroke={AXIS} tick={{ fontSize: 12 }} domain={[0, 100]} unit="%" />
-        <Tooltip 
-          content={<CustomTooltip />}
-          formatter={(value) => `${value.toFixed(2)}%`}
+        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+        <XAxis 
+          dataKey="item" 
+          stroke="#6b7280" 
+          tick={{ fontSize: 11, fontFamily: "'Outfit', sans-serif" }} 
+          angle={-45} 
+          textAnchor="end" 
+          height={80} 
         />
-        <Bar dataKey="avg_conf" name="Confidence Level (%)" radius={[6, 6, 0, 0]} animationDuration={800}>
-          {chartData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={getColor(entry.avg_conf)} />
-          ))}
-        </Bar>
+        <YAxis 
+          stroke="#6b7280" 
+          tick={{ fontSize: 12, fontFamily: "'Outfit', sans-serif" }} 
+          domain={[0, 100]} 
+          label={{ 
+            value: 'Confidence %', 
+            angle: -90, 
+            position: 'insideLeft',
+            style: { fontFamily: "'Outfit', sans-serif", fontSize: "12px", fill: "#6b7280" }
+          }}
+        />
+        <Tooltip content={<CustomTooltip />} formatter={(value) => `${value.toFixed(2)}%`} />
+        <Legend 
+          wrapperStyle={{ paddingTop: "16px", fontFamily: "'Outfit', sans-serif" }}
+          formatter={() => <span style={{ color: "#0EA5E9", fontSize: "14px" }}>Confidence Level</span>}
+        />
+        <Bar 
+          dataKey="avg_conf" 
+          name="Confidence Level (%)" 
+          fill="#0EA5E9" 
+          radius={[4, 4, 0, 0]} 
+          maxBarSize={50}
+        />
       </BarChart>
     </ResponsiveContainer>
   );
@@ -285,7 +293,7 @@ export const ModelCompareChart = ({ data = [] }) => {
         <CartesianGrid strokeDasharray="3 3" stroke={GREEN_GRID} vertical={false} />
         <XAxis dataKey="model" stroke={AXIS} tick={{ fontSize: 11 }} angle={-45} textAnchor="end" height={80} />
         <YAxis stroke={AXIS} tick={{ fontSize: 12 }} yAxisId="left" />
-        <YAxis yAxisId="right" orientation="right" stroke={BLUE} tick={{ fontSize: 12 }} unit="%" />
+        <YAxis yAxisId="right" orientation="right" stroke={DARK_GREEN} tick={{ fontSize: 12 }} unit="%" />
         <Tooltip content={<CustomTooltip />} />
         <Legend wrapperStyle={{ paddingTop: "20px" }} />
         <Bar dataKey="count" yAxisId="left" name="Prediction Count" fill={GREEN} radius={[6, 6, 0, 0]} />
@@ -293,10 +301,10 @@ export const ModelCompareChart = ({ data = [] }) => {
           yAxisId="right"
           type="monotone" 
           dataKey="percent" 
-          stroke={RED} 
+          stroke={DARK_GREEN} 
           strokeWidth={2.5} 
           name="Usage %" 
-          dot={{ r: 4, fill: RED }}
+          dot={{ r: 4, fill: DARK_GREEN }}
         />
       </ComposedChart>
     </ResponsiveContainer>
@@ -380,10 +388,10 @@ export const BrandsSummaryChart = ({ data = [] }) => {
 
 
 /* -------------------------------------------------------------------------- */
-/* Brands Pie Chart — enhanced with better labels and interactivity          */
+/* Brands Pie Chart — RVM Style with Blue/Pink colors and outside labels     */
 /* -------------------------------------------------------------------------- */
 export const BrandsPieChart = ({ data = [], top = 8 }) => {
-  if (!data?.length) return <div className="p-4 text-gray-500">No brand data available</div>;
+  if (!data?.length) return <div style={{ padding: "16px", color: "#6b7280", fontFamily: "'Outfit', sans-serif" }}>No brand data available</div>;
 
   // Sort & take top N
   const sorted = data.slice().sort((a, b) => b.total - a.total).slice(0, top);
@@ -391,15 +399,35 @@ export const BrandsPieChart = ({ data = [], top = 8 }) => {
   // Total for percentage calculation
   const total = sorted.reduce((acc, item) => acc + (item.total || 0), 0) || 1;
 
+  // Natural colors for pie charts (no purple)
+  const RVM_COLORS = ["#0EA5E9", "#4CAF50", "#F97316", "#14B8A6", "#EF4444", "#D97706", "#059669", "#0891B2"];
+
   // Prepare pie data
   const chartData = sorted.map((b) => ({
     name: b.brand,
     value: b.total,
-    percent: ((b.total / total) * 100).toFixed(1),
+    percent: ((b.total / total) * 100).toFixed(2),
   }));
 
-  const renderCustomLabel = ({ name, percent }) => {
-    return `${name} ${percent}%`;
+  // Custom label with color and percentage outside the pie
+  const renderCustomLabel = ({ cx, cy, midAngle, outerRadius, name, percent, fill }) => {
+    const RADIAN = Math.PI / 180;
+    const radius = outerRadius + 30;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    
+    return (
+      <text 
+        x={x} 
+        y={y} 
+        fill={fill}
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        style={{ fontFamily: "'Outfit', sans-serif", fontSize: "13px", fontWeight: "500" }}
+      >
+        {`${name}: ${percent}%`}
+      </text>
+    );
   };
 
   return (
@@ -409,29 +437,75 @@ export const BrandsPieChart = ({ data = [], top = 8 }) => {
           data={chartData}
           dataKey="value"
           nameKey="name"
-          outerRadius={120}
-          innerRadius={50}
-          paddingAngle={3}
+          cx="50%"
+          cy="50%"
+          outerRadius={100}
+          innerRadius={0}
+          paddingAngle={1}
           label={renderCustomLabel}
-          labelLine={true}
+          labelLine={{ stroke: "#9ca3af", strokeWidth: 1 }}
           animationDuration={800}
         >
-          {chartData.map((_, i) => (
-            <Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />
+          {chartData.map((entry, i) => (
+            <Cell key={`cell-${i}`} fill={RVM_COLORS[i % RVM_COLORS.length]} />
           ))}
         </Pie>
 
         <Legend 
           verticalAlign="bottom" 
-          height={32} 
-          wrapperStyle={{ paddingTop: "20px" }}
-          formatter={(value, entry) => `${value} (${entry.payload.percent}%)`}
+          height={40} 
+          wrapperStyle={{ paddingTop: "20px", fontFamily: "'Outfit', sans-serif" }}
+          formatter={(value) => <span style={{ color: "#374151", fontSize: "14px" }}>{value}</span>}
         />
         <Tooltip 
           content={<CustomTooltip />}
           formatter={(value) => [`${value} items`, "Count"]}
         />
       </PieChart>
+    </ResponsiveContainer>
+  );
+};
+
+/* -------------------------------------------------------------------------- */
+/* Ocean Blue Bar Chart with clean styling                                    */
+/* -------------------------------------------------------------------------- */
+export const RVMBarChart = ({ data = [], dataKey = "value", xKey = "name", title = "" }) => {
+  if (!data?.length) return <div style={{ padding: "16px", color: "#6b7280", fontFamily: "'Outfit', sans-serif" }}>No data available</div>;
+
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <BarChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} horizontal={true} />
+        <XAxis 
+          dataKey={xKey} 
+          stroke="#6b7280" 
+          tick={{ fontSize: 12, fontFamily: "'Outfit', sans-serif" }} 
+          axisLine={{ stroke: "#E5E7EB" }}
+        />
+        <YAxis 
+          stroke="#6b7280" 
+          tick={{ fontSize: 12, fontFamily: "'Outfit', sans-serif" }}
+          axisLine={{ stroke: "#E5E7EB" }}
+          label={{ 
+            value: title, 
+            angle: -90, 
+            position: 'insideLeft',
+            style: { fontFamily: "'Outfit', sans-serif", fontSize: "12px", fill: "#6b7280" }
+          }}
+        />
+        <Tooltip content={<CustomTooltip />} />
+        <Legend 
+          wrapperStyle={{ paddingTop: "16px", fontFamily: "'Outfit', sans-serif" }}
+          formatter={(value) => <span style={{ color: "#0EA5E9", fontSize: "14px" }}>{value}</span>}
+        />
+        <Bar 
+          dataKey={dataKey} 
+          name={title || dataKey}
+          fill="#0EA5E9" 
+          radius={[4, 4, 0, 0]}
+          maxBarSize={60}
+        />
+      </BarChart>
     </ResponsiveContainer>
   );
 };
@@ -456,7 +530,7 @@ export const PerformanceRadarChart = ({ data = [] }) => {
         <PolarAngleAxis dataKey="category" stroke={AXIS} tick={{ fontSize: 11 }} />
         <PolarRadiusAxis stroke={AXIS} tick={{ fontSize: 11 }} angle={90} domain={[0, 100]} />
         <Radar name="Accuracy %" dataKey="accuracy" stroke={GREEN} fill={GREEN} fillOpacity={0.5} />
-        <Radar name="Volume (norm)" dataKey="volume" stroke={BLUE} fillOpacity={0.3} />
+        <Radar name="Volume (norm)" dataKey="volume" stroke={DARK_GREEN} fillOpacity={0.3} />
         <Legend wrapperStyle={{ paddingTop: "20px" }} />
         <Tooltip content={<CustomTooltip />} />
       </RadarChart>

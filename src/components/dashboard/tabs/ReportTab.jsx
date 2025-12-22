@@ -1,16 +1,85 @@
 // ReportTab.jsx
 import React, { useRef, useState } from "react";
+import { FileText, Download, DownloadCloud, FileDown, Loader } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 // Import all tabs
 import OverviewTab from "./OverviewTab";
 import AnalyticsTab from "./AnalyticsTab";
-import BrandInsightsTab from "./BrandInsightsTab";
+import BrandsAnalyticsTab from "./BrandsAnalyticsTab";
 import FlagsTab from "./FlagsTab";
-import MachinesTab from "./MachinesTab";
-import ModelsTab from "./ModelsTab";
 
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+// Report Section Card Component
+const ReportSectionCard = ({ icon: Icon, title, description, onGenerate, isGenerating }) => {
+  return (
+    <div className="card-responsive" style={{
+      background: "white",
+      border: "1px solid #E5E7EB",
+      display: "flex",
+      flexDirection: "column",
+      gap: "12px",
+      fontFamily: "'Outfit', sans-serif",
+    }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+        <div style={{
+          background: "linear-gradient(135deg, #E0F2FE 0%, #BAE6FD 100%)",
+          padding: "10px 12px",
+          borderRadius: "8px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}>
+          <Icon style={{ width: 20, height: 20, color: "#0EA5E9" }} />
+        </div>
+        <div>
+          <h4 style={{ fontSize: "15px", fontWeight: "600", color: "#111827", marginBottom: "4px" }}>
+            {title}
+          </h4>
+          <p style={{ fontSize: "13px", color: "#6b7280", margin: 0 }}>
+            {description}
+          </p>
+        </div>
+      </div>
+      <button
+        onClick={onGenerate}
+        disabled={isGenerating}
+        style={{
+          width: "100%",
+          padding: "10px 16px",
+          background: isGenerating ? "#E5E7EB" : "#4CAF50",
+          color: isGenerating ? "#6b7280" : "white",
+          border: "none",
+          borderRadius: "8px",
+          fontSize: "13px",
+          fontWeight: "600",
+          cursor: isGenerating ? "not-allowed" : "pointer",
+          transition: "all 0.2s ease",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
+          fontFamily: "'Outfit', sans-serif",
+          boxShadow: isGenerating ? "none" : "0 2px 8px rgba(76, 175, 80, 0.3)",
+          opacity: isGenerating ? 0.6 : 1,
+        }}
+      >
+        {isGenerating ? (
+          <>
+            <Loader style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
+            Generating...
+          </>
+        ) : (
+          <>
+            <Download style={{ width: 14, height: 14 }} />
+            Generate Report
+          </>
+        )}
+      </button>
+    </div>
+  );
+};
 
 // Section wrapper
 function Section({ title, children, className = "" }) {
@@ -39,9 +108,18 @@ export default function ReportTab({
   const reportRef = useRef(null);
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
+  const [generatingSection, setGeneratingSection] = useState(null);
 
   // Only one export at a time
   const [exportType, setExportType] = useState(null); // 'full' or 'multi'
+
+  // Report section refs for html2canvas
+  const reportSectionRefs = {
+    overview: useRef(null),
+    analytics: useRef(null),
+    brands: useRef(null),
+    flags: useRef(null),
+  };
 
   // -------- FIX: REMOVE OKLCH COLORS BEFORE html2canvas -------- //
   const sanitizeColors = (element) => {
@@ -248,6 +326,80 @@ export default function ReportTab({
     if (style) style.remove();
   };
 
+  // Generate PDF for a single section using html2canvas
+  const generateSectionReport = async (sectionKey, sectionName) => {
+    setGeneratingSection(sectionKey);
+    try {
+      const element = reportSectionRefs[sectionKey]?.current;
+      if (!element) {
+        console.error(`Reference for section ${sectionKey} not found`);
+        setGeneratingSection(null);
+        return;
+      }
+
+      // Hide elements that shouldn't be in the report
+      const elementsToHide = element.querySelectorAll(".hide-in-report");
+      elementsToHide.forEach(el => el.style.display = "none");
+
+      // Create canvas from the element
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+      });
+
+      // Restore hidden elements
+      elementsToHide.forEach(el => el.style.display = "");
+
+      // Create PDF
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth - 20; // 10mm margins
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 10; // Top margin
+
+      // First page
+      pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight - 20;
+
+      // Additional pages if needed
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight - 20;
+      }
+
+      // Add metadata
+      pdf.setProperties({
+        title: `${sectionName} Report`,
+        subject: `AI Dashboard - ${sectionName} Report`,
+        author: "Dropme AI Dashboard",
+        keywords: "report, analytics, dashboard",
+        creator: "AI Dashboard",
+      });
+
+      // Download
+      pdf.save(`${sectionName.replace(/\s+/g, "-").toLowerCase()}-report-${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error(`Error generating report for ${sectionKey}:`, error);
+      alert(`Failed to generate ${sectionName} report. Please try again.`);
+    } finally {
+      setGeneratingSection(null);
+    }
+  };
+
   // Export all sections as multi-page PDF
   const exportPDF = async () => {
     if (!reportRef.current || exporting) return;
@@ -435,49 +587,128 @@ export default function ReportTab({
   };
 
   return (
-    <div className="w-full">
-      {/* Export Buttons - Hidden in PDF */}
-      <div className="export-buttons flex justify-end gap-3 mb-4">
+    <div style={{ fontFamily: "'Outfit', sans-serif" }}>
+      {/* Header with Generate Report Button */}
+      <div className="card-responsive" style={{
+        background: "linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%)",
+        border: "1px solid #ddd6fe",
+        marginBottom: "24px",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}>
+        <div>
+          <h2 style={{ fontSize: "20px", fontWeight: "700", color: "#111827", margin: 0, marginBottom: "4px" }}>
+            Generate New Report
+          </h2>
+          <p style={{ fontSize: "14px", color: "#6b7280", margin: 0 }}>
+            Create a comprehensive report with multiple sections or export individual section data
+          </p>
+        </div>
         <button
           onClick={exportPDF}
-          className={`px-4 py-2 text-white rounded-lg ${
-            exporting ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
-          }`}
           disabled={exporting}
+          style={{
+            padding: "10px 24px",
+            background: exporting ? "#E5E7EB" : "#4CAF50",
+            color: exporting ? "#6b7280" : "white",
+            border: "none",
+            borderRadius: "8px",
+            fontSize: "14px",
+            fontWeight: "600",
+            cursor: exporting ? "not-allowed" : "pointer",
+            transition: "all 0.2s ease",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            flexShrink: 0,
+            fontFamily: "'Outfit', sans-serif",
+            boxShadow: exporting ? "none" : "0 2px 8px rgba(76, 175, 80, 0.3)",
+            opacity: exporting ? 0.6 : 1,
+          }}
         >
-          {exporting && exportType === 'multi' ? `Exporting... ${exportProgress}%` : "Export Multi-Page PDF"}
+          {exporting ? (
+            <>
+              <Loader style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} />
+              {exportProgress}%
+            </>
+          ) : (
+            <>
+              <FileDown style={{ width: 16, height: 16 }} />
+              Generate Report
+            </>
+          )}
         </button>
       </div>
 
-      {/* Progress bar - Hidden in PDF */}
-      {exporting && exportProgress > 0 && (
-        <div className="export-progress mb-4">
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div
-              className="bg-green-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${exportProgress}%` }}
-            />
+      {/* Section Report Cards */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+        gap: "16px",
+        marginBottom: "24px",
+      }}>
+        {/* Dashboard Overview */}
+        <ReportSectionCard
+          icon={FileDown}
+          title="Dashboard Overview"
+          description="Generate a detailed report for this section"
+          onGenerate={() => generateSectionReport("overview", "Dashboard Overview")}
+          isGenerating={generatingSection === "overview"}
+        />
+
+        {/* Analytics Report */}
+        <ReportSectionCard
+          icon={FileDown}
+          title="Analytics & Predictions"
+          description="Generate a detailed report for this section"
+          onGenerate={() => generateSectionReport("analytics", "Analytics")}
+          isGenerating={generatingSection === "analytics"}
+        />
+
+        {/* Brands Analytics Report */}
+        <ReportSectionCard
+          icon={FileDown}
+          title="Brands Analytics"
+          description="Generate a detailed report for this section"
+          onGenerate={() => generateSectionReport("brands", "Brands Analytics")}
+          isGenerating={generatingSection === "brands"}
+        />
+
+        {/* Flags Report */}
+        <ReportSectionCard
+          icon={FileDown}
+          title="Flagged Items"
+          description="Generate a detailed report for this section"
+          onGenerate={() => generateSectionReport("flags", "Flagged Items")}
+          isGenerating={generatingSection === "flags"}
+        />
+      </div>
+
+      {/* Hidden Report Content for Canvas Capture */}
+      <div style={{ display: "none" }}>
+        {/* Overview Section */}
+        <div ref={reportSectionRefs.overview}>
+          <div style={{ padding: "24px", background: "white" }}>
+            <h1 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#111827" }}>
+              Dashboard Overview Report
+            </h1>
+            <p style={{ color: "#6b7280", marginBottom: "20px" }}>
+              Generated on {new Date().toLocaleString()}
+            </p>
+            <OverviewTab overview={overview} topModel={topModel} machines={machines} />
           </div>
-          <p className="text-sm text-gray-600 mt-1 text-center">
-            Generating PDF... {exportProgress}%
-          </p>
-        </div>
-      )}
-
-      {/* Report Content */}
-      <div
-        id="report-content"
-        ref={reportRef}
-        className="space-y-10 pb-20 bg-white relative"
-      >
-        <div data-section="Overview">
-          <Section title="">
-            <OverviewTab overview={overview} topModel={topModel} />
-          </Section>
         </div>
 
-        <div data-section="Analytics Overview">
-          <Section title="Analytics Overview">
+        {/* Analytics Section */}
+        <div ref={reportSectionRefs.analytics}>
+          <div style={{ padding: "24px", background: "white" }}>
+            <h1 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#111827" }}>
+              Analytics & Predictions Report
+            </h1>
+            <p style={{ color: "#6b7280", marginBottom: "20px" }}>
+              Generated on {new Date().toLocaleString()}
+            </p>
             <AnalyticsTab
               accuracyByClass={accuracyByClass}
               avgConfByItem={avgConfByItem}
@@ -487,51 +718,110 @@ export default function ReportTab({
               decisionDuration={decisionDuration}
               histogram={histogram}
             />
-          </Section>
+          </div>
         </div>
 
-        <div data-section="Brand Insights">
-          <Section title="Brand Insights">
-            <BrandInsightsTab brandsSummary={brandsSummary} />
-          </Section>
+        {/* Brands Analytics Section */}
+        <div ref={reportSectionRefs.brands}>
+          <div style={{ padding: "24px", background: "white" }}>
+            <h1 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#111827" }}>
+              Brands Analytics Report
+            </h1>
+            <p style={{ color: "#6b7280", marginBottom: "20px" }}>
+              Generated on {new Date().toLocaleString()}
+            </p>
+            <BrandsAnalyticsTab />
+          </div>
         </div>
 
-        <div data-section="Flags Overview">
-          <Section title="Flags Overview">
+        {/* Flags Section */}
+        <div ref={reportSectionRefs.flags}>
+          <div style={{ padding: "24px", background: "white" }}>
+            <h1 style={{ fontSize: "24px", fontWeight: "700", marginBottom: "24px", color: "#111827" }}>
+              Flagged Items Report
+            </h1>
+            <p style={{ color: "#6b7280", marginBottom: "20px" }}>
+              Generated on {new Date().toLocaleString()}
+            </p>
             <FlagsTab flagFrequency={flagFrequency} />
-          </Section>
+          </div>
         </div>
 
-        <div data-section="Machine Performance">
-          <Section title="Machine Performance">
-            <MachinesTab data={machines} />
-          </Section>
-        </div>
+        {/* Full Report Section */}
+        <div ref={reportRef} data-section="Full Report">
+          <div style={{ padding: "24px", background: "white" }}>
+            <h1 style={{ fontSize: "28px", fontWeight: "700", marginBottom: "24px", color: "#111827" }}>
+              Complete AI Dashboard Report
+            </h1>
+            <p style={{ color: "#6b7280", marginBottom: "40px" }}>
+              Generated on {new Date().toLocaleString()}
+            </p>
 
-        <div data-section="Model Performance">
-          <Section title="Model Performance & Confidence">
-            <ModelsTab />
-          </Section>
-        </div>
+            {/* Overview Section in Full Report */}
+            <div style={{ marginBottom: "40px", paddingBottom: "40px", borderBottom: "1px solid #E5E7EB" }}>
+              <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#111827", marginBottom: "20px" }}>
+                Dashboard Overview
+              </h2>
+              <OverviewTab overview={overview} topModel={topModel} machines={machines} />
+            </div>
 
-        {/* Footer - Report Generated By */}
-        <div className="border-t pt-8 mt-8">
-          <p className="text-center text-gray-500 text-sm">
-            Report generated by Dropme AI Dashboard
-          </p>
-          <p className="text-center text-gray-400 text-xs mt-2">
-            {new Date().toLocaleString('en-US', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-              hour12: true
-            })}
-          </p>
+            {/* Analytics Section in Full Report */}
+            <div style={{ marginBottom: "40px", paddingBottom: "40px", borderBottom: "1px solid #E5E7EB" }}>
+              <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#111827", marginBottom: "20px" }}>
+                Analytics & Predictions
+              </h2>
+              <AnalyticsTab
+                accuracyByClass={accuracyByClass}
+                avgConfByItem={avgConfByItem}
+                brandsSummary={brandsSummary}
+                modelCompare={modelCompare}
+                flagFrequency={flagFrequency}
+                decisionDuration={decisionDuration}
+                histogram={histogram}
+              />
+            </div>
+
+            {/* Brands Analytics Section in Full Report */}
+            <div style={{ marginBottom: "40px", paddingBottom: "40px", borderBottom: "1px solid #E5E7EB" }}>
+              <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#111827", marginBottom: "20px" }}>
+                Brands Analytics
+              </h2>
+              <BrandsAnalyticsTab />
+            </div>
+
+            {/* Flags Section in Full Report */}
+            <div style={{ marginBottom: "40px" }}>
+              <h2 style={{ fontSize: "22px", fontWeight: "700", color: "#111827", marginBottom: "20px" }}>
+                Flagged Items
+              </h2>
+              <FlagsTab flagFrequency={flagFrequency} />
+            </div>
+
+            {/* Footer */}
+            <div style={{ borderTop: "1px solid #E5E7EB", paddingTop: "24px", marginTop: "40px", textAlign: "center" }}>
+              <p style={{ color: "#6b7280", marginBottom: "8px" }}>
+                Report generated by Dropme AI Dashboard
+              </p>
+              <p style={{ fontSize: "12px", color: "#9ca3af" }}>
+                {new Date().toLocaleString('en-US', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                })}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }

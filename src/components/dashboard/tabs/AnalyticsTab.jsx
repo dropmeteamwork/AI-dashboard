@@ -1,4 +1,4 @@
-// AnalyticsTab.jsx
+// AnalyticsTab.jsx - Matching RVM Dashboard Style
 import React, { useState, useEffect, useMemo } from "react";
 import {
   AccuracyByClassChart,
@@ -9,64 +9,90 @@ import {
   ModelCompareChart,
   DecisionDurationChart,
 } from "../../charts/ChartsAnalytics";
-import { Badge } from "@/components/ui/badge";
 import { LineChart, Line, AreaChart, Area, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { TrendingUp, AlertCircle, CheckCircle, Clock, Activity, Star, Zap, AlertTriangle } from "lucide-react";
 import { COLORS } from "@/constants/colors";
+import ChartCard from "../ChartCard";
 
 const API_BASE = import.meta.env.VITE_API_URL || "https://web-ai-dashboard.up.railway.app";
 
-/* Card wrapper */
-const Card = ({ title, subtitle, children, headerBg = "#F2F7F2", actions }) => (
-  <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-    <div style={{ background: headerBg }} className="px-4 py-3 flex justify-between items-center">
-      <div>
-        <div className="text-sm font-semibold text-gray-700">{title}</div>
-        {subtitle && <div className="text-xs text-gray-500">{subtitle}</div>}
-      </div>
+// Gradient presets - Mixed colors like RVM dashboard
+const gradients = {
+  blue: "linear-gradient(135deg, #E0F2FE 0%, #DBEAFE 100%)",
+  green: "linear-gradient(135deg, #DCFCE7 0%, #D1FAE5 100%)",
+  purple: "linear-gradient(135deg, #F3E8FF 0%, #EDE9FE 100%)",
+  pink: "linear-gradient(135deg, #FCE7F3 0%, #FDF2F8 100%)",
+  orange: "linear-gradient(135deg, #FFEDD5 0%, #FEF3C7 100%)",
+  cyan: "linear-gradient(135deg, #CFFAFE 0%, #E0F7FA 100%)",
+};
 
-      {/* Right-side action buttons */}
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+const borderColors = {
+  blue: "#93C5FD",
+  green: "#86EFAC",
+  purple: "#C4B5FD",
+  pink: "#F9A8D4",
+  orange: "#FDBA74",
+  cyan: "#67E8F9",
+};
+
+/* Card wrapper - Matching RVM Dashboard Style */
+const Card = ({ title, subtitle, children, headerBg = "transparent", actions }) => (
+  <div 
+    style={{
+      background: "white",
+      border: "1px solid #E5E7EB",
+      borderRadius: "16px",
+      fontFamily: "'Outfit', sans-serif",
+    }}
+  >
+    <div style={{ 
+      padding: "20px 24px", 
+      display: "flex", 
+      justifyContent: "space-between", 
+      alignItems: "center",
+      borderBottom: "1px solid #F3F4F6",
+    }}>
+      <div>
+        <div style={{ fontSize: "18px", fontWeight: "600", color: "#111827" }}>{title}</div>
+        {subtitle && <div style={{ fontSize: "14px", color: "#6b7280", marginTop: "4px" }}>{subtitle}</div>}
+      </div>
+      {actions && <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>{actions}</div>}
     </div>
-    <div className="p-4">{children}</div>
+    <div style={{ padding: "24px" }}>{children}</div>
   </div>
 );
 
-/* Stat Card */
-const StatCard = ({ icon: Icon, title, value, subtitle, color = "green" }) => {
-  let bgColorStyle, textColorStyle, borderColorStyle;
-  if (color === "green") {
-    bgColorStyle = { backgroundColor: COLORS.TINT_10 };
-    textColorStyle = { color: COLORS.PRIMARY };
-    borderColorStyle = { borderColor: `${COLORS.PRIMARY}30` };
-  } else if (color === "red") {
-    bgColorStyle = { backgroundColor: "#fef2f2" };
-    textColorStyle = { color: "#b91c1c" };
-    borderColorStyle = { borderColor: "#fecaca" };
-  } else {
-    bgColorStyle = { backgroundColor: "#f0f9ff" };
-    textColorStyle = { color: "#1e40af" };
-    borderColorStyle = { borderColor: "#bfdbfe" };
-  }
-
-  const combinedStyle = {
-    ...bgColorStyle,
-    ...borderColorStyle,
-    border: `1px solid`,
-    borderRadius: "0.5rem",
-    padding: "1rem",
+/* Stat Card - Mixed colors KPI Style */
+const StatCard = ({ icon: Icon, title, value, subtitle, color = "green", trend, trendValue }) => {
+  const colorMap = {
+    green: { bg: "green", value: "#4CAF50" },
+    red: { bg: "pink", value: "#EF4444" },
+    blue: { bg: "blue", value: "#3B82F6" },
+    purple: { bg: "purple", value: "#8B5CF6" },
+    orange: { bg: "orange", value: "#F59E0B" },
   };
-
+  
+  const colorConfig = colorMap[color] || colorMap.green;
+  
   return (
-    <div style={combinedStyle}>
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-xs font-semibold text-gray-600 mb-1">{title}</div>
-          <div className="text-3xl font-bold" style={textColorStyle}>{value}</div>
-          {subtitle && <div className="text-xs text-gray-500 mt-1">{subtitle}</div>}
-        </div>
-        <Icon className="h-6 w-6" style={textColorStyle} />
+    <div 
+      style={{
+        background: gradients[colorConfig.bg],
+        border: `1px solid ${borderColors[colorConfig.bg]}`,
+        borderRadius: "16px",
+        padding: "20px 24px",
+        fontFamily: "'Outfit', sans-serif",
+      }}
+    >
+      <div style={{ fontSize: "14px", fontWeight: "500", color: "#374151", marginBottom: "12px" }}>
+        {title}
       </div>
+      <div style={{ fontSize: "32px", fontWeight: "700", color: colorConfig.value, marginBottom: "8px" }}>
+        {value}
+      </div>
+      {subtitle && (
+        <div style={{ fontSize: "13px", color: "#6b7280" }}>{subtitle}</div>
+      )}
     </div>
   );
 };
@@ -166,17 +192,17 @@ export default function AnalyticsTab({
 
   if (error) {
     return (
-      <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
-        <div className="text-red-800 font-semibold mb-2">Error Loading Analytics</div>
-        <div className="text-red-700 text-sm">{error}</div>
+      <div style={{ padding: "24px", background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: "12px" }}>
+        <div style={{ color: "#991B1B", fontWeight: "600", marginBottom: "8px" }}>Error Loading Analytics</div>
+        <div style={{ color: "#B91C1C", fontSize: "14px" }}>{error}</div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Key Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      {/* Key Metrics Row - Responsive */}
+      <div className="kpi-grid">
         <StatCard
           icon={CheckCircle}
           title="Overall Accuracy"
@@ -189,7 +215,7 @@ export default function AnalyticsTab({
           title="Flagged Items"
           value={insights.flagged}
           subtitle={`${((insights.flagged / insights.total) * 100).toFixed(1)}% of total`}
-          color={insights.flagged > 100 ? "red" : "green"}
+          color={insights.flagged > 100 ? "red" : "orange"}
         />
         <StatCard
           icon={TrendingUp}
@@ -210,25 +236,30 @@ export default function AnalyticsTab({
       {/* Processing Trends */}
       {trends.length > 0 && (
         <Card title="Processing Trends" subtitle="Items processed over time">
-          <div style={{ height: 280 }}>
+          <div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={trends} margin={{ top: 10, right: 20, left: 0, bottom: 30 }}>
                 <defs>
                   <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={COLORS.PRIMARY} stopOpacity={0.8} />
-                    <stop offset="95%" stopColor={COLORS.PRIMARY} stopOpacity={0} />
+                    <stop offset="5%" stopColor="#4CAF50" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#4CAF50" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={COLORS.TINT_20} />
-                <XAxis dataKey="timestamp" stroke="#2d2d2d" tick={{ fontSize: 12 }} />
-                <YAxis stroke="#2d2d2d" tick={{ fontSize: 12 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis dataKey="timestamp" stroke="#6b7280" tick={{ fontSize: 11, fontFamily: "'Outfit', sans-serif" }} />
+                <YAxis stroke="#6b7280" tick={{ fontSize: 11, fontFamily: "'Outfit', sans-serif" }} />
                 <Tooltip 
-                  contentStyle={{ background: "#fff", border: "1px solid #ccc", borderRadius: "4px" }}
+                  contentStyle={{ 
+                    background: "#fff", 
+                    border: "1px solid #E5E7EB", 
+                    borderRadius: "12px",
+                    fontFamily: "'Outfit', sans-serif",
+                  }}
                 />
                 <Area
                   type="monotone"
                   dataKey="count"
-                  stroke={COLORS.PRIMARY}
+                  stroke="#4CAF50"
                   fillOpacity={1}
                   fill="url(#colorCount)"
                   name="Items Processed"
@@ -239,89 +270,108 @@ export default function AnalyticsTab({
         </Card>
       )}
 
-      {/* Top row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Top row - Responsive charts grid */}
+      <div className="charts-grid">
         <Card title="Classification Distribution" subtitle="Accepted vs Rejected by item class">
-          <div style={{ height: 320 }}>
+          <div className="chart-container">
             <AccuracyByClassChart data={accuracyByClass} />
           </div>
         </Card>
 
         <Card title="Model Confidence by Item" subtitle="Average confidence score per item">
-          <div style={{ height: 320 }}>
+          <div className="chart-container">
             <AvgConfidenceByItemChart data={avgConfByItem} />
           </div>
         </Card>
       </div>
 
-      {/* Brand Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card
-            title="Brand Distribution"
-            subtitle={`Top ${Math.min(8, brandsSummary.length)} detected brands`}
-      
-          >
-            <div className="flex gap-6">
-              {/* Pie Chart */}
-              <div style={{ width: "60%" }}>
-                <div style={{ height: 360 }}>
-                  <BrandsPieChart data={brandsSummary} top={8} />
-                </div>
-              </div>
+      {/* Brand Summary - Responsive */}
+      <div className="charts-grid">
+        <Card
+          title="Brand Distribution"
+          subtitle={`Top ${Math.min(8, brandsSummary.length)} detected brands`}
+        >
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {/* Pie Chart */}
+            <div className="chart-container">
+              <BrandsPieChart data={brandsSummary} top={8} />
+            </div>
+          </div>
+        </Card>
 
-              {/* Scrollable List */}
-              <div
-                style={{ width: "40%", maxHeight: 360 }}
-                className="overflow-y-auto pr-2"
-              >
-                <div className="space-y-3">
-                  {(brandsSummary || []).slice(0, 10).map((b, i) => (
-                    <div
-                      key={b.brand + i}
-                      className="flex items-center justify-between border rounded p-3 hover:shadow-sm transition"
-                      style={{ background: `linear-gradient(to right, ${COLORS.TINT_10}, white)` }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: COLORS.PRIMARY }}>
-                          {i + 1}
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold text-gray-900">{b.brand}</div>
-                          <div className="text-xs text-gray-500">
-                            last: {b.last_seen ? new Date(b.last_seen).toLocaleDateString() : "N/A"}
-                          </div>
-                        </div>
-                      </div>
-                      <Badge className="font-bold" style={{ backgroundColor: COLORS.TINT_10, color: COLORS.PRIMARY }}>{b.total}</Badge>
+        {/* Scrollable List - Now in separate card */}
+        <Card title="Top Brands" subtitle="Brand ranking by count">
+          <div style={{ maxHeight: "320px", overflowY: "auto", paddingRight: "8px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {(brandsSummary || []).slice(0, 10).map((b, i) => (
+                <div
+                  key={b.brand + i}
+                  style={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    justifyContent: "space-between",
+                    background: "white",
+                    border: "1px solid #E5E7EB",
+                    borderRadius: "10px",
+                    padding: "10px 14px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div style={{ 
+                      width: "28px", 
+                      height: "28px", 
+                      borderRadius: "50%", 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "center", 
+                      color: "white", 
+                      fontWeight: "700", 
+                      fontSize: "12px",
+                      backgroundColor: "#4CAF50",
+                    }}>
+                      {i + 1}
                     </div>
-                  ))}
+                    <div>
+                      <div style={{ fontSize: "13px", fontWeight: "600", color: "#111827" }}>{b.brand}</div>
+                      <div style={{ fontSize: "11px", color: "#6b7280" }}>
+                        last: {b.last_seen ? new Date(b.last_seen).toLocaleDateString() : "N/A"}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ 
+                    backgroundColor: "#E8F5E9", 
+                    color: "#4CAF50", 
+                    padding: "3px 10px", 
+                    borderRadius: "16px",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                  }}>
+                    {b.total}
+                  </div>
                 </div>
+                ))}
               </div>
             </div>
           </Card>
-        </div>
 
         {/* Flag Analysis */}
-        <div>
-          <Card title="Flag Analysis" subtitle="Top flagged issues">
-            <div style={{ height: 360 }}>
-              <FlagFrequencyChart data={flagFrequency} />
-            </div>
-          </Card>
-        </div>
+        <Card title="Flag Analysis" subtitle="Top flagged issues">
+          <div className="chart-container">
+            <FlagFrequencyChart data={flagFrequency} />
+          </div>
+        </Card>
       </div>
 
-      {/* Model Performance */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Model Performance - Responsive */}
+      <div className="charts-grid">
         <Card title="Model Usage" subtitle="Predictions by model version">
-          <div style={{ height: 280 }}>
+          <div className="chart-container">
             <ModelCompareChart data={modelCompare} />
           </div>
         </Card>
 
         <Card title="Confidence Distribution" subtitle="Bucketed by confidence ranges">
-          <div style={{ height: 280 }}>
+          <div className="chart-container">
             <AvgConfidenceHistogram data={histogram} />
           </div>
         </Card>
@@ -329,13 +379,18 @@ export default function AnalyticsTab({
 
       {/* Insights Summary */}
       <Card title="Key Insights" subtitle="Performance summary and recommendations">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Activity size={18} className="text-blue-600" />
-              <div className="font-semibold text-blue-900">Processing Volume</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "16px" }}>
+          <div style={{ 
+            background: gradients.blue, 
+            border: `1px solid ${borderColors.blue}`, 
+            borderRadius: "12px", 
+            padding: "16px" 
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <Activity size={18} style={{ color: "#4CAF50" }} />
+              <div style={{ fontWeight: "600", color: "#2E7D32" }}>Processing Volume</div>
             </div>
-            <div className="text-sm text-blue-800">
+            <div style={{ fontSize: "14px", color: "#1B5E20" }}>
               Total items processed: <strong>{insights.total.toLocaleString()}</strong>
               {insights.total > 0 && (
                 <>
@@ -346,12 +401,17 @@ export default function AnalyticsTab({
             </div>
           </div>
 
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Star size={18} className="text-green-600" />
-              <div className="font-semibold text-green-900">Top Performer</div>
+          <div style={{ 
+            background: gradients.green, 
+            border: `1px solid ${borderColors.green}`, 
+            borderRadius: "12px", 
+            padding: "16px" 
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <Star size={18} style={{ color: "#4CAF50" }} />
+              <div style={{ fontWeight: "600", color: "#166534" }}>Top Performer</div>
             </div>
-            <div className="text-sm text-green-800">
+            <div style={{ fontSize: "14px", color: "#14532D" }}>
               Brand: <strong>{insights.topBrand?.brand || "N/A"}</strong>
               {insights.topBrand && (
                 <>
@@ -362,12 +422,17 @@ export default function AnalyticsTab({
             </div>
           </div>
 
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Zap size={18} className="text-purple-600" />
-              <div className="font-semibold text-purple-900">Model Status</div>
+          <div style={{ 
+            background: gradients.purple, 
+            border: `1px solid ${borderColors.purple}`, 
+            borderRadius: "12px", 
+            padding: "16px" 
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <Zap size={18} style={{ color: "#4CAF50" }} />
+              <div style={{ fontWeight: "600", color: "#2E7D32" }}>Model Status</div>
             </div>
-            <div className="text-sm text-purple-800">
+            <div style={{ fontSize: "14px", color: "#1B5E20" }}>
               Most used: <strong>{insights.topModel?.model_used || "N/A"}</strong>
               {insights.topModel && (
                 <>
@@ -378,12 +443,17 @@ export default function AnalyticsTab({
             </div>
           </div>
 
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle size={18} className="text-orange-600" />
-              <div className="font-semibold text-orange-900">Quality Metrics</div>
+          <div style={{ 
+            background: gradients.orange, 
+            border: `1px solid ${borderColors.orange}`, 
+            borderRadius: "12px", 
+            padding: "16px" 
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+              <AlertTriangle size={18} style={{ color: "#4CAF50" }} />
+              <div style={{ fontWeight: "600", color: "#2E7D32" }}>Quality Metrics</div>
             </div>
-            <div className="text-sm text-orange-800">
+            <div style={{ fontSize: "14px", color: "#1B5E20" }}>
               Avg confidence: <strong>{insights.avgConf}%</strong>
               <br />
               Flagged rate: <strong>{((insights.flagged / insights.total) * 100 || 0).toFixed(2)}%</strong>

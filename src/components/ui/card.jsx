@@ -6,9 +6,12 @@ function Card({ className, ...props }) {
     <div
       data-slot="card"
       className={cn(
-        "bg-white text-black flex flex-col gap-6 rounded-[16px] border border-[#E4E4E4] py-6 shadow-custom",
+        "bg-white text-black flex flex-col gap-6 rounded-2xl border border-[#E4E4E4] py-6",
         className
       )}
+      style={{
+        boxShadow: "0px 1px 2px -1px rgba(0,0,0,0.1), 0px 1px 3px 0px rgba(0,0,0,0.1)",
+      }}
       {...props}
     />
   );

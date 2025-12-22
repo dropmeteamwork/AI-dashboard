@@ -79,8 +79,8 @@ const Header = ({ refreshAll, sidebarOpen, setSidebarOpen, timePeriod = "all", o
               src="/logo.png"
               alt="AI Engineer Dashboard Logo"
               style={{
-                width: 48,
-                height: 48,
+                width: 100,
+                height: 100,
                 borderRadius: "10px",
                 objectFit: "contain",
                 display: "block",
